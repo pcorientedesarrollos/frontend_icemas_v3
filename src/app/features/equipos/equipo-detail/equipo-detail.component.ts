@@ -1,5 +1,6 @@
 import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
+import { CommonModule, Location } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { EquiposService } from '../equipos.service';
 import { DataTableComponent, DataTableColumn, DataTableAction } from '../../../shared/components/data-table/data-table.component';
@@ -18,6 +19,7 @@ export class EquipoDetailComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private equiposService = inject(EquiposService);
     private notificationService = inject(NotificationService);
+    private location = inject(Location);
     private destroyRef = inject(DestroyRef);
 
     equipo = signal<any>(null);
@@ -105,6 +107,6 @@ export class EquipoDetailComponent implements OnInit {
     }
 
     navigateBack(): void {
-        this.router.navigate(['/equipos']);
+        this.location.back();
     }
 }

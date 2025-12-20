@@ -1,9 +1,16 @@
 <div class="space-y-6">
   <div class="flex justify-between items-center px-1">
     <div>
-      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
-        {{ isEditMode() ? 'Editar Servicio' : 'Nueva Orden de Servicio' }}
-      </h1>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
+          {{ isEditMode() ? 'Editar Servicio' : 'Nueva Orden de Servicio' }}
+        </h1>
+        @if (isEditMode()) {
+        <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium border border-gray-200">
+          Folio: {{ form.get('folio')?.value }}
+        </span>
+        }
+      </div>
       <p class="text-gray-500 text-sm mt-1">
         {{ isEditMode() ? 'Modificar información del servicio' : 'Registrar una nueva orden de servicio' }}
       </p>
@@ -13,156 +20,116 @@
   <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="p-6 space-y-6">
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="flex flex-col">
-          <label for="folio" class="block text-sm font-medium text-gray-700 mb-2">
-            Folio <span class="text-gray-400 text-xs">(Autogenerado)</span>
-          </label>
-          <div class="relative">
-            <input type="text" id="folio" formControlName="folio"
-              class="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 cursor-not-allowed outline-none"
-              [readonly]="true" [placeholder]="isEditMode() ? '' : 'SRV-AAAA-MM-##### (Autogenerado)'" />
+      <!-- Section 1: Context (Cliente, Sucursal, Equipo) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Cliente -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="block text-sm font-medium text-gray-700">Cliente <span class="text-red-500">*</span></label>
+            <button type="button" (click)="openClienteModal()"
+              class="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Nuevo
+            </button>
           </div>
+          <app-searchable-select [options]="clientes()" valueKey="idCliente" labelKey="nombre"
+            formControlName="idCliente" placeholder="Seleccionar Cliente..." (selectionChange)="onClienteChange()">
+          </app-searchable-select>
+          @if (form.get('idCliente')?.touched && form.get('idCliente')?.errors?.['required']) {
+          <p class="mt-1.5 text-sm text-red-500">El cliente es requerido</p>
+          }
         </div>
 
+        <!-- Sucursal -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="block text-sm font-medium text-gray-700">Sucursal <span class="text-red-500">*</span></label>
+            <button type="button" (click)="openSucursalModal()" [disabled]="!form.get('idCliente')?.value"
+              class="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Nueva
+            </button>
+          </div>
+          <app-searchable-select [options]="sucursales()" valueKey="idSucursal" labelKey="nombre"
+            formControlName="idSucursal" placeholder="Seleccionar Sucursal..." (selectionChange)="onSucursalChange()"
+            [disabled]="sucursales().length === 0">
+          </app-searchable-select>
+          @if (form.get('idSucursal')?.touched && form.get('idSucursal')?.errors?.['required']) {
+          <p class="mt-1.5 text-sm text-red-500">La sucursal es requerida</p>
+          }
+        </div>
+
+        <!-- Equipo -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="block text-sm font-medium text-gray-700">Equipo <span class="text-red-500">*</span></label>
+            <button type="button" (click)="openEquipoModal()" [disabled]="!form.get('idSucursal')?.value"
+              class="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Nuevo
+            </button>
+          </div>
+          <app-searchable-select [options]="equipos()" valueKey="idEquipo" labelKey="nombre" formControlName="idEquipo"
+            placeholder="Seleccionar Equipo..." [disabled]="equipos().length === 0">
+          </app-searchable-select>
+          @if (form.get('idEquipo')?.touched && form.get('idEquipo')?.errors?.['required']) {
+          <p class="mt-1.5 text-sm text-red-500">El equipo es requerido</p>
+          }
+        </div>
+      </div>
+
+      <!-- Section 2: Details (Tipo, Tecnico, Fecha, Estado) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Tipo Servicio -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Servicio <span
+              class="text-red-500">*</span></label>
+          <app-searchable-select [options]="tiposServicio()" valueKey="idTipoServicio" labelKey="nombre"
+            formControlName="idTipoServicio" placeholder="Seleccionar Tipo...">
+          </app-searchable-select>
+          @if (form.get('idTipoServicio')?.touched && form.get('idTipoServicio')?.errors?.['required']) {
+          <p class="mt-1.5 text-sm text-red-500">Requerido</p>
+          }
+        </div>
+
+        <!-- Tecnico -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Técnico <span
+              class="text-red-500">*</span></label>
+          <app-searchable-select [options]="tecnicos()" valueKey="idTecnico" labelKey="nombre"
+            formControlName="idTecnico" placeholder="Seleccionar Técnico...">
+          </app-searchable-select>
+          @if (form.get('idTecnico')?.touched && form.get('idTecnico')?.errors?.['required']) {
+          <p class="mt-1.5 text-sm text-red-500">Requerido</p>
+          }
+        </div>
+
+        <!-- Fecha Servicio -->
         <div class="flex flex-col">
           <label for="fechaServicio" class="block text-sm font-medium text-gray-700 mb-2">
-            Fecha de Servicio <span class="text-red-500">*</span>
+            Fecha <span class="text-red-500">*</span>
           </label>
           <input type="date" id="fechaServicio" formControlName="fechaServicio"
             class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700" />
           @if (form.get('fechaServicio')?.touched && form.get('fechaServicio')?.errors?.['required']) {
-          <p class="mt-1.5 text-sm text-red-500">La fecha es requerida</p>
+          <p class="mt-1.5 text-sm text-red-500">Requerida</p>
           }
         </div>
 
+        <!-- Estado -->
         <div class="flex flex-col">
-          <label for="estado" class="block text-sm font-medium text-gray-700 mb-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
             Estado <span class="text-red-500">*</span>
           </label>
-          <select id="estado" formControlName="estado"
-            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700">
-            <option value="Pendiente">Pendiente</option>
-            <option value="En Proceso">En Proceso</option>
-            <option value="Completado">Completado</option>
-            <option value="Cancelado">Cancelado</option>
-          </select>
-        </div>
-
-        <div class="flex flex-col w-full">
-          <label for="idCliente" class="block text-sm font-medium text-gray-700 mb-2">
-            Cliente <span class="text-red-500">*</span>
-          </label>
-          <div class="flex h-[46px] group">
-            <select id="idCliente" formControlName="idCliente" (change)="onClienteChange()"
-              class="flex-1 min-w-0 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-l-lg border-r-0 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700 cursor-pointer">
-              <option value="">Seleccionar cliente...</option>
-              @for (cliente of clientes(); track cliente.idCliente) {
-              <option [value]="cliente.idCliente">{{ cliente.nombre }} - {{ cliente.empresa }}</option>
-              }
-            </select>
-            <button type="button" (click)="openClienteModal()"
-              class="flex-none w-12 bg-primary-600 text-white rounded-r-lg hover:bg-primary-700 active:scale-95 transition-all flex items-center justify-center border border-primary-600 shadow-sm"
-              title="Agregar nuevo cliente">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-          </div>
-          <div class="min-h-[20px]">
-            @if (form.get('idCliente')?.touched && form.get('idCliente')?.errors?.['required']) {
-            <p class="mt-1.5 text-sm text-red-500">El cliente es requerido</p>
-            }
-          </div>
-        </div>
-
-        <div class="flex flex-col w-full">
-          <label for="idSucursal" class="block text-sm font-medium text-gray-700 mb-2">
-            Sucursal <span class="text-red-500">*</span>
-          </label>
-          <div class="flex h-[46px] group">
-            <select id="idSucursal" formControlName="idSucursal" (change)="onSucursalChange()"
-              [disabled]="sucursales().length === 0"
-              class="flex-1 min-w-0 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-l-lg border-r-0 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-              <option value="">{{ sucursales().length === 0 ? 'Seleccione cliente primero' : 'Seleccionar sucursal...'
-                }}</option>
-              @for (sucursal of sucursales(); track sucursal.idSucursal) {
-              <option [value]="sucursal.idSucursal">{{ sucursal.nombre }}</option>
-              }
-            </select>
-            <button type="button" (click)="openSucursalModal()" [disabled]="!form.get('idCliente')?.value"
-              class="flex-none w-12 bg-primary-600 text-white rounded-r-lg hover:bg-primary-700 active:scale-95 transition-all flex items-center justify-center border border-primary-600 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Agregar nueva sucursal">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-          </div>
-          <div class="min-h-[20px]">
-            @if (form.get('idSucursal')?.touched && form.get('idSucursal')?.errors?.['required']) {
-            <p class="mt-1.5 text-sm text-red-500">La sucursal es requerida</p>
-            }
-          </div>
-        </div>
-
-        <div class="flex flex-col w-full">
-          <label for="idEquipo" class="block text-sm font-medium text-gray-700 mb-2">
-            Equipo <span class="text-red-500">*</span>
-          </label>
-          <div class="flex h-[46px] group">
-            <select id="idEquipo" formControlName="idEquipo" [disabled]="equipos().length === 0"
-              class="flex-1 min-w-0 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-l-lg border-r-0 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-              <option value="">{{ equipos().length === 0 ? 'Seleccione sucursal primero' : 'Seleccionar equipo...' }}
-              </option>
-              @for (equipo of equipos(); track equipo.idEquipo) {
-              <option [value]="equipo.idEquipo">{{ equipo.nombre }} - {{ equipo.modelo }}</option>
-              }
-            </select>
-            <button type="button" (click)="openEquipoModal()" [disabled]="!form.get('idSucursal')?.value"
-              class="flex-none w-12 bg-primary-600 text-white rounded-r-lg hover:bg-primary-700 active:scale-95 transition-all flex items-center justify-center border border-primary-600 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Agregar nuevo equipo">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-          </div>
-          <div class="min-h-[20px]">
-            @if (form.get('idEquipo')?.touched && form.get('idEquipo')?.errors?.['required']) {
-            <p class="mt-1.5 text-sm text-red-500">El equipo es requerido</p>
-            }
-          </div>
-        </div>
-
-        <div class="flex flex-col">
-          <label for="idTecnico" class="block text-sm font-medium text-gray-700 mb-2">
-            Técnico <span class="text-red-500">*</span>
-          </label>
-          <select id="idTecnico" formControlName="idTecnico"
-            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700">
-            <option value="">Seleccionar técnico</option>
-            @for (tecnico of tecnicos(); track tecnico.idTecnico) {
-            <option [value]="tecnico.idTecnico">{{ tecnico.nombre }}</option>
-            }
-          </select>
-          @if (form.get('idTecnico')?.touched && form.get('idTecnico')?.errors?.['required']) {
-          <p class="mt-1.5 text-sm text-red-500">El técnico es requerido</p>
-          }
-        </div>
-
-        <div class="flex flex-col">
-          <label for="idTipoServicio" class="block text-sm font-medium text-gray-700 mb-2">
-            Tipo de Servicio <span class="text-red-500">*</span>
-          </label>
-          <select id="idTipoServicio" formControlName="idTipoServicio"
-            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700">
-            <option value="">Seleccionar tipo de servicio</option>
-            @for (tipo of tiposServicio(); track tipo.idTipoServicio) {
-            <option [value]="tipo.idTipoServicio">{{ tipo.nombre }}</option>
-            }
-          </select>
-          @if (form.get('idTipoServicio')?.touched && form.get('idTipoServicio')?.errors?.['required']) {
-          <p class="mt-1.5 text-sm text-red-500">El tipo de servicio es requerido</p>
-          }
+          <app-searchable-select [options]="['Pendiente', 'En Proceso', 'Completado', 'Cancelado']"
+            formControlName="estado" placeholder="Seleccionar...">
+          </app-searchable-select>
         </div>
       </div>
 

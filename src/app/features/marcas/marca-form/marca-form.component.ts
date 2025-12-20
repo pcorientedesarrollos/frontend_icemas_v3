@@ -1,15 +1,17 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { MarcasService } from '../marcas.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { UniqueMarcaNameValidator } from '../../../core/validators/unique-marca-name.validator';
 
+import { Location } from '@angular/common';
+
 @Component({
     selector: 'app-marca-form',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule],
+    imports: [CommonModule, ReactiveFormsModule, RouterModule],
     templateUrl: './marca-form.component.html',
     styleUrl: './marca-form.component.css'
 })
@@ -19,6 +21,7 @@ export class MarcaFormComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private marcasService = inject(MarcasService);
     private notificationService = inject(NotificationService);
+    private location = inject(Location);
     private uniqueNameValidator = inject(UniqueMarcaNameValidator);
 
     isEditMode = signal(false);
@@ -77,6 +80,6 @@ export class MarcaFormComponent implements OnInit {
     }
 
     onCancel(): void {
-        this.router.navigate(['/catalogos/marcas']);
+        this.location.back();
     }
 }

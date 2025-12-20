@@ -2,14 +2,14 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MarcasService, Marca } from '../marcas.service';
-import { DataTableComponent, DataTableColumn, DataTableAction } from '../../../shared/components/data-table/data-table.component';
+import { CatalogTableComponent, CatalogTableColumn, CatalogTableAction } from '../../../shared/components/catalog-table/catalog-table.component';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
     selector: 'app-marcas-list',
     standalone: true,
-    imports: [CommonModule, DataTableComponent, ModalComponent],
+    imports: [CommonModule, CatalogTableComponent, ModalComponent],
     templateUrl: './marcas-list.component.html',
     styleUrl: './marcas-list.component.css'
 })
@@ -23,12 +23,12 @@ export class MarcasListComponent implements OnInit {
     showDeleteModal = signal(false);
     selectedMarca = signal<Marca | null>(null);
 
-    columns: DataTableColumn[] = [
+    columns: CatalogTableColumn[] = [
         { key: 'idMarca', label: 'ID', sortable: true, width: 'w-1 whitespace-nowrap' },
         { key: 'descripcion', label: 'Nombre', sortable: true }
     ];
 
-    actions: DataTableAction[] = [
+    actions: CatalogTableAction[] = [
         {
             label: 'Editar',
             color: 'success',

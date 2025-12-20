@@ -7,11 +7,12 @@ import { EquiposService } from '../../equipos/equipos.service';
 import { DataTableComponent, DataTableColumn } from '../../../shared/components/data-table/data-table.component';
 import { NotificationService } from '../../../core/services/notification.service';
 import { PdfService } from '../../../core/services/pdf.service';
+import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-reportes-selector',
   standalone: true,
-  imports: [CommonModule, FormsModule, DataTableComponent],
+  imports: [CommonModule, FormsModule, DataTableComponent, SearchableSelectComponent],
   templateUrl: './reportes-selector.component.html',
   styleUrl: './reportes-selector.component.css'
 })
@@ -230,6 +231,7 @@ export class ReportesSelectorComponent {
     }
 
     // Convert to CSV format with semicolon delimiter for Excel (Spanish locale)
+    // Convert to CSV format with semicolon delimiter for Excel (Spanish locale)
     const headers = ['Folio', 'Fecha', 'Tipo Servicio', 'Cliente', 'Equipo', 'Técnico', 'Estado'];
     const rows = data.map(item => [
       item.folio || '',
@@ -248,7 +250,15 @@ export class ReportesSelectorComponent {
       return escaped.includes(';') || escaped.includes('\n') ? `"${escaped}"` : escaped;
     };
 
+    const titleRow = [`${this.reportTitle()}: ${this.reportSubtitle()}`];
+    const dateRow = [`Del ${this.fechaInicio()} al ${this.fechaFin()}`];
+    const generatedRow = [`Generado: ${new Date().toLocaleDateString('es-MX')}`];
+
     const csvContent = [
+      titleRow.join(';'),
+      dateRow.join(';'),
+      generatedRow.join(';'),
+      '', // Empty row
       headers.join(';'),
       ...rows.map(row => row.map(escapeCell).join(';'))
     ].join('\r\n');
@@ -280,55 +290,101 @@ export class ReportesSelectorComponent {
     // Generate PDF using jsPDF
     import('jspdf').then(({ jsPDF }) => {
       const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
 
-      // Title
-      doc.setFontSize(18);
-      doc.text(title, 20, 20);
+      // Header Background (Orange)
+      doc.setFillColor(245, 166, 35); // #F5A623
+      doc.rect(0, 0, pageWidth, 20, 'F');
+
+      // Header Title (White)
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.setFont('Helvetica', 'bold');
+      doc.text('ICEMAS - Reporte de Servicios', 20, 13);
+
+      doc.setTextColor(0, 0, 0); // Reset text color
+
+      // Report Title
+      doc.setFontSize(16);
+      doc.setTextColor(245, 166, 35); // #F5A623
+      doc.text(title, 20, 35);
 
       // Date range
-      doc.setFontSize(12);
-      doc.text(fechaRango, 20, 30);
-      doc.text(`Generado: ${new Date().toLocaleDateString('es-MX')}`, 20, 38);
+      doc.setFontSize(11);
+      doc.setTextColor(100, 100, 100);
+      doc.text(fechaRango, 20, 42);
+      doc.text(`Generado: ${new Date().toLocaleDateString('es-MX')}`, 20, 48);
 
       // Stats
-      doc.setFontSize(14);
-      doc.text('Resumen:', 20, 52);
-      doc.setFontSize(11);
-      doc.text(`Total de servicios: ${data.length}`, 20, 62);
-      doc.text(`Completados: ${stats.completado}`, 20, 70);
-      doc.text(`En Proceso: ${stats.enProceso}`, 20, 78);
-      doc.text(`Pendientes: ${stats.pendiente}`, 20, 86);
-      doc.text(`Cancelados: ${stats.cancelado}`, 20, 94);
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.setFont('Helvetica', 'bold');
+      doc.text('Resumen:', 20, 60);
+
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Total de servicios: ${data.length}`, 20, 68);
+
+      // Colored stats
+      doc.setTextColor(16, 185, 129); // Green
+      doc.text(`Completados: ${stats.completado}`, 20, 75);
+
+      doc.setTextColor(245, 166, 35); // Orange (Primary)
+      doc.text(`En Proceso: ${stats.enProceso}`, 80, 75);
+
+      doc.setTextColor(234, 179, 8); // Yellow/Amber
+      doc.text(`Pendientes: ${stats.pendiente}`, 140, 75);
+
+      doc.setTextColor(239, 68, 68); // Red
+      doc.text(`Cancelados: ${stats.cancelado}`, 200, 75, { align: 'right' }); // Adjust position if needed or keep inline
 
       // Table header
-      let y = 110;
+      let y = 90;
+      doc.setFillColor(245, 166, 35); // #F5A623
+      doc.rect(20, y - 5, pageWidth - 40, 8, 'F');
+
+      doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
       doc.setFont('Helvetica', 'bold');
-      doc.text('Folio', 20, y);
-      doc.text('Fecha', 50, y);
-      doc.text('Estado', 80, y);
-      doc.text('Tipo', 110, y);
+      doc.text('Folio', 22, y);
+      doc.text('Fecha', 45, y);
+      doc.text('Estado', 70, y);
+      doc.text('Tipo', 100, y);
       doc.text('Equipo', 150, y);
 
       // Table rows
+      doc.setTextColor(0, 0, 0);
       doc.setFont('Helvetica', 'normal');
-      y += 10;
+      y += 8;
 
-      data.slice(0, 20).forEach(item => {
+      data.forEach((item, index) => {
         if (y > 270) {
           doc.addPage();
           y = 20;
+          // Re-draw header on new page? Optional, keeping simple for now
         }
-        doc.text(item.folio || '', 20, y);
-        doc.text(item.fechaServicio ? new Date(item.fechaServicio).toLocaleDateString('es-MX') : '', 50, y);
-        doc.text(item.estado || '', 80, y);
-        doc.text((item.tipoServicio?.nombre || '').substring(0, 15), 110, y);
-        doc.text((item.equipo?.nombre || '').substring(0, 20), 150, y);
+
+        // Zebra striping
+        if (index % 2 === 1) {
+          doc.setFillColor(249, 250, 251); // Gray 50
+          doc.rect(20, y - 5, pageWidth - 40, 8, 'F');
+        }
+
+        doc.text(item.folio || '', 22, y);
+        doc.text(item.fechaServicio ? new Date(item.fechaServicio).toLocaleDateString('es-MX') : '', 45, y);
+        doc.text(item.estado || '', 70, y);
+        doc.text((item.tipoServicio?.nombre || '').substring(0, 20), 100, y);
+        doc.text((item.equipo?.nombre || '').substring(0, 25), 150, y);
         y += 8;
       });
 
-      if (data.length > 20) {
-        doc.text(`... y ${data.length - 20} registros más`, 20, y + 10);
+      // Footer
+      const totalPages = doc.internal.pages.length - 1;
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text(`Página ${i} de ${totalPages}`, pageWidth - 20, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
       }
 
       // Save

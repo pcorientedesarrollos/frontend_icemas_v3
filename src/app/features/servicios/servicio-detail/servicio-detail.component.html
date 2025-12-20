@@ -10,16 +10,21 @@
   </div>
   } @else if (servicio()) {
   <!-- Header -->
-  <div class="flex justify-between items-center px-1">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Servicio #{{ servicio()?.folio }}</h1>
-      <p class="text-gray-500 text-sm mt-1">Orden de servicio</p>
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
+    <div class="flex items-center gap-3">
+      <button (click)="navigateBack()"
+        class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </button>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Servicio #{{ servicio()?.folio }}</h1>
+        <p class="text-gray-500 text-sm mt-1">Orden de servicio</p>
+      </div>
     </div>
     <div class="flex gap-3">
-      <button (click)="navigateBack()"
-        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors">
-        Volver
-      </button>
+      <!-- Removed old 'Volver' button -->
       <button (click)="generatePdf()" [disabled]="generatingPdf()"
         class="px-4 py-2 text-sm font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-colors disabled:opacity-50 flex items-center gap-2">
         @if (generatingPdf()) {

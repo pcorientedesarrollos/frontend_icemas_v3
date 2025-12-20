@@ -2,14 +2,14 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TiposServicioService, TipoServicio } from '../tipos-servicio.service';
-import { DataTableComponent, DataTableColumn, DataTableAction } from '../../../shared/components/data-table/data-table.component';
+import { CatalogTableComponent, CatalogTableColumn, CatalogTableAction } from '../../../shared/components/catalog-table/catalog-table.component';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
     selector: 'app-tipos-servicio-list',
     standalone: true,
-    imports: [CommonModule, DataTableComponent, ModalComponent],
+    imports: [CommonModule, CatalogTableComponent, ModalComponent],
     templateUrl: './tipos-servicio-list.component.html',
     styleUrl: './tipos-servicio-list.component.css'
 })
@@ -23,20 +23,13 @@ export class TiposServicioListComponent implements OnInit {
     showDeleteModal = signal(false);
     selectedTipo = signal<TipoServicio | null>(null);
 
-    columns: DataTableColumn[] = [
+    columns: CatalogTableColumn[] = [
         { key: 'idTipoServicio', label: 'ID', sortable: true, width: 'w-1 whitespace-nowrap' },
         { key: 'nombre', label: 'Nombre', sortable: true },
-        {
-            key: 'activo',
-            label: 'Estado',
-            sortable: true,
-            type: 'badge',
-            format: (value) => value === 1 ? 'Activo' : 'Inactivo',
-            width: 'w-1 whitespace-nowrap'
-        }
+
     ];
 
-    actions: DataTableAction[] = [
+    actions: CatalogTableAction[] = [
         {
             label: 'Editar',
             color: 'success',

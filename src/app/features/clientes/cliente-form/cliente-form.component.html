@@ -1,6 +1,12 @@
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex justify-between items-center px-1">
+  <div class="flex items-center gap-3 px-1">
+    <button (click)="onCancel()"
+      class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+    </button>
     <div>
       <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
         {{ isEditMode() ? 'Editar Cliente' : 'Nuevo Cliente' }}
@@ -72,6 +78,76 @@
           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700"
           placeholder="Ej: 55 1234 5678" />
       </div>
+
+      <!-- Sucursales (Only for Create Mode) -->
+      @if (!isEditMode()) {
+      <div class="pt-6 mt-6 border-t border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-medium text-gray-900">Sucursales Iniciales</h3>
+          <button type="button" (click)="addSucursal()"
+            class="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Agregar Sucursal
+          </button>
+        </div>
+
+        <div formArrayName="sucursales" class="space-y-4">
+          @for (sucursal of sucursalesArray.controls; track $index) {
+          <div [formGroupName]="$index" class="p-4 bg-gray-50 rounded-lg border border-gray-200 relative group">
+            <button type="button" (click)="removeSucursal($index)"
+              class="absolute top-2 right-2 text-gray-400 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label [for]="'sucursal-nombre-' + $index" class="block text-xs font-medium text-gray-600 mb-1">Nombre
+                  Sucursal
+                  *</label>
+                <input type="text" [id]="'sucursal-nombre-' + $index" formControlName="nombre"
+                  class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm"
+                  placeholder="Ej: Matriz" />
+                @if (sucursal.get('nombre')?.touched && sucursal.get('nombre')?.errors?.['required']) {
+                <p class="mt-1 text-xs text-red-500">Requerido</p>
+                }
+              </div>
+              <div>
+                <label [for]="'sucursal-direccion-' + $index"
+                  class="block text-xs font-medium text-gray-600 mb-1">Dirección</label>
+                <input type="text" [id]="'sucursal-direccion-' + $index" formControlName="direccion"
+                  class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm"
+                  placeholder="Ej: Av. Reforma 123" />
+              </div>
+              <div>
+                <label [for]="'sucursal-telefono-' + $index"
+                  class="block text-xs font-medium text-gray-600 mb-1">Teléfono</label>
+                <input type="tel" [id]="'sucursal-telefono-' + $index" formControlName="telefono"
+                  class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm"
+                  placeholder="Ej: 55 1234 5678" />
+              </div>
+              <div>
+                <label [for]="'sucursal-contacto-' + $index"
+                  class="block text-xs font-medium text-gray-600 mb-1">Contacto</label>
+                <input type="text" [id]="'sucursal-contacto-' + $index" formControlName="contacto"
+                  class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm"
+                  placeholder="Ej: Lic. González" />
+              </div>
+            </div>
+          </div>
+          }
+          @if (sucursalesArray.length === 0) {
+          <p class="text-sm text-gray-500 italic text-center py-4 bg-gray-50 rounded-lg dashed-border">
+            No hay sucursales agregadas.
+            <button type="button" (click)="addSucursal()" class="text-primary-600 hover:underline">Agregar una</button>
+          </p>
+          }
+        </div>
+      </div>
+      }
 
       <!-- Actions -->
       <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">

@@ -1,108 +1,104 @@
 <div class="space-y-6">
-      @if (loading()) {
-        <div class="flex items-center justify-center p-12">
-          <svg class="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-        </div>
-      } @else if (tecnico()) {
-        <!-- Header -->
-        <div class="flex justify-between items-center px-1">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ tecnico()?.nombre }}</h1>
-            <p class="text-gray-500 text-sm mt-1">Técnico {{ tecnico()?.activo ? '(Activo)' : '(Inactivo)' }}</p>
-          </div>
-          <div class="flex gap-3">
-            <button
-              (click)="navigateBack()"
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors"
-            >
-              Volver
-            </button>
-            <button
-              (click)="navigateToEdit()"
-              class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-colors"
-            >
-              Editar Técnico
-            </button>
-          </div>
-        </div>
+  @if (loading()) {
+  <div class="flex items-center justify-center p-12">
+    <svg class="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+      </path>
+    </svg>
+  </div>
+  } @else if (tecnico()) {
+  <!-- Header -->
+  <div class="flex justify-between items-center px-1">
+    <div class="flex items-center gap-3">
+      <button (click)="navigateBack()"
+        class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </button>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ tecnico()?.nombre }}</h1>
+        <p class="text-gray-500 text-sm mt-1">Técnico {{ tecnico()?.activo ? '(Activo)' : '(Inactivo)' }}</p>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <button (click)="navigateToEdit()"
+        class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-colors">
+        Editar Técnico
+      </button>
+    </div>
+  </div>
 
-        <!-- Información Personal -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Información Personal</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div>
-              <p class="text-sm font-medium text-gray-500 mb-1">Nombre</p>
-              <p class="text-base text-gray-900">{{ tecnico()?.nombre }}</p>
-            </div>
-            <div>
-              <p class="text-sm font-medium text-gray-500 mb-1">Email</p>
-              <p class="text-base text-gray-900">{{ tecnico()?.email }}</p>
-            </div>
-            <div>
-              <p class="text-sm font-medium text-gray-500 mb-1">Teléfono</p>
-              <p class="text-base text-gray-900">{{ tecnico()?.telefono }}</p>
-            </div>
-            <div>
-              <p class="text-sm font-medium text-gray-500 mb-1">Especialidad</p>
-              <p class="text-base text-gray-900">{{ tecnico()?.especialidad }}</p>
-            </div>
-          </div>
-        </div>
+  <!-- Información Personal -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">Información Personal</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div>
+        <p class="text-sm font-medium text-gray-500 mb-1">Nombre</p>
+        <p class="text-base text-gray-900">{{ tecnico()?.nombre }}</p>
+      </div>
+      <div>
+        <p class="text-sm font-medium text-gray-500 mb-1">Email</p>
+        <p class="text-base text-gray-900">{{ tecnico()?.email }}</p>
+      </div>
+      <div>
+        <p class="text-sm font-medium text-gray-500 mb-1">Teléfono</p>
+        <p class="text-base text-gray-900">{{ tecnico()?.telefono }}</p>
+      </div>
+      <div>
+        <p class="text-sm font-medium text-gray-500 mb-1">Especialidad</p>
+        <p class="text-base text-gray-900">{{ tecnico()?.especialidad }}</p>
+      </div>
+    </div>
+  </div>
 
-        <!-- Estadísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Servicios</div>
-            <div class="text-2xl font-bold text-primary-600 mt-1">{{ servicios().length }}</div>
-          </div>
-          <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">Completados</div>
-            <div class="text-2xl font-bold text-green-600 mt-1">{{ getCountByEstado('Completado') }}</div>
-          </div>
-          <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">En Proceso</div>
-            <div class="text-2xl font-bold text-primary-600 mt-1">{{ getCountByEstado('En Proceso') }}</div>
-          </div>
-        </div>
+  <!-- Estadísticas -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+      <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Servicios</div>
+      <div class="text-2xl font-bold text-primary-600 mt-1">{{ servicios().length }}</div>
+    </div>
+    <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+      <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">Completados</div>
+      <div class="text-2xl font-bold text-green-600 mt-1">{{ getCountByEstado('Completado') }}</div>
+    </div>
+    <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+      <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">En Proceso</div>
+      <div class="text-2xl font-bold text-primary-600 mt-1">{{ getCountByEstado('En Proceso') }}</div>
+    </div>
+  </div>
 
-        <!-- Firma Digital (si existe) -->
-        @if (tecnico()?.firma) {
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Firma Digital</h2>
-            <img 
-              [src]="'http://localhost:3000/' + tecnico()?.firma" 
-              alt="Firma del técnico"
-              class="max-w-md border border-gray-200 rounded-lg"
-            />
-          </div>
-        }
+  <!-- Firma Digital (si existe) -->
+  @if (tecnico()?.firma) {
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">Firma Digital</h2>
+    <img [src]="'http://localhost:3000/' + tecnico()?.firma" alt="Firma del técnico"
+      class="max-w-md border border-gray-200 rounded-lg" />
+  </div>
+  }
 
-        <!-- Historial de Servicios -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div class="p-6 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">Historial de Servicios</h2>
-          </div>
-          
-          <div class="p-6">
-            @if (servicios().length === 0) {
-              <div class="text-center py-12">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p class="mt-4 text-sm text-gray-500">No hay servicios registrados</p>
-              </div>
-            } @else {
-              <app-data-table
-                [data]="servicios()"
-                [columns]="serviciosColumns"
-                [loading]="loadingServicios()"
-                [searchable]="true"
-              />
-            }
-          </div>
-        </div>
+  <!-- Historial de Servicios -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="p-6 border-b border-gray-200">
+      <h2 class="text-lg font-semibold text-gray-900">Historial de Servicios</h2>
+    </div>
+
+    <div class="p-6">
+      @if (servicios().length === 0) {
+      <div class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <p class="mt-4 text-sm text-gray-500">No hay servicios registrados</p>
+      </div>
+      } @else {
+      <app-data-table [data]="servicios()" [columns]="serviciosColumns" [loading]="loadingServicios()"
+        [searchable]="true" />
       }
     </div>
+  </div>
+  }
+</div>

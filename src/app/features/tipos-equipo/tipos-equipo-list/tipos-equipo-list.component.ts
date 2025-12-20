@@ -2,14 +2,14 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TiposEquipoService, TipoEquipo } from '../tipos-equipo.service';
-import { DataTableComponent, DataTableColumn, DataTableAction } from '../../../shared/components/data-table/data-table.component';
+import { CatalogTableComponent, CatalogTableColumn, CatalogTableAction } from '../../../shared/components/catalog-table/catalog-table.component';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
     selector: 'app-tipos-equipo-list',
     standalone: true,
-    imports: [CommonModule, DataTableComponent, ModalComponent],
+    imports: [CommonModule, CatalogTableComponent, ModalComponent],
     templateUrl: './tipos-equipo-list.component.html',
     styleUrl: './tipos-equipo-list.component.css'
 })
@@ -23,13 +23,13 @@ export class TiposEquipoListComponent implements OnInit {
     showDeleteModal = signal(false);
     selectedTipo = signal<TipoEquipo | null>(null);
 
-    columns: DataTableColumn[] = [
+    columns: CatalogTableColumn[] = [
         { key: 'idTipo', label: 'ID', sortable: true, width: 'w-1 whitespace-nowrap' },
         { key: 'nombre', label: 'Nombre', sortable: true },
         { key: 'descripcion', label: 'Descripción', sortable: false }
     ];
 
-    actions: DataTableAction[] = [
+    actions: CatalogTableAction[] = [
         {
             label: 'Editar',
             color: 'success',

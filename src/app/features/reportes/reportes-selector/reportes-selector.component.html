@@ -100,27 +100,26 @@
                     @case ('equipo') { Equipo }
                     }
                 </label>
-                <select (change)="onEntityChange($event)"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                    <option value="">Seleccionar...</option>
-                    @switch (selectedReportType()) {
-                    @case ('cliente') {
-                    @for (cliente of clientes(); track cliente.idCliente) {
-                    <option [value]="cliente.idCliente">{{ cliente.nombre }}</option>
-                    }
-                    }
-                    @case ('tecnico') {
-                    @for (tecnico of tecnicos(); track tecnico.idTecnico) {
-                    <option [value]="tecnico.idTecnico">{{ tecnico.nombre }}</option>
-                    }
-                    }
-                    @case ('equipo') {
-                    @for (equipo of equipos(); track equipo.idEquipo) {
-                    <option [value]="equipo.idEquipo">{{ equipo.nombre }} - {{ equipo.serie }}</option>
-                    }
-                    }
-                    }
-                </select>
+                @switch (selectedReportType()) {
+                @case ('cliente') {
+                <app-searchable-select [options]="clientes()" valueKey="idCliente" labelKey="nombre"
+                    [ngModel]="selectedEntityId()" (selectionChange)="selectedEntityId.set($event)"
+                    placeholder="Seleccionar Cliente...">
+                </app-searchable-select>
+                }
+                @case ('tecnico') {
+                <app-searchable-select [options]="tecnicos()" valueKey="idTecnico" labelKey="nombre"
+                    [ngModel]="selectedEntityId()" (selectionChange)="selectedEntityId.set($event)"
+                    placeholder="Seleccionar Técnico...">
+                </app-searchable-select>
+                }
+                @case ('equipo') {
+                <app-searchable-select [options]="equipos()" valueKey="idEquipo" labelKey="nombre"
+                    [ngModel]="selectedEntityId()" (selectionChange)="selectedEntityId.set($event)"
+                    placeholder="Seleccionar Equipo...">
+                </app-searchable-select>
+                }
+                }
             </div>
 
             <div>

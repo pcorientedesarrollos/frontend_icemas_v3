@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { EquiposService } from '../equipos.service';
@@ -7,10 +7,11 @@ import { ClientesService } from '../../clientes/clientes.service';
 import { MarcasService } from '../../marcas/marcas.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
+import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-equipo-form',
-  imports: [CommonModule, ReactiveFormsModule, ModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, ModalComponent, SearchableSelectComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './equipo-form.component.html',
   styleUrl: './equipo-form.component.css',
@@ -23,6 +24,7 @@ export class EquipoFormComponent implements OnInit {
   private clientesService = inject(ClientesService);
   private marcasService = inject(MarcasService);
   private notificationService = inject(NotificationService);
+  private location = inject(Location);
 
   isEditMode = signal(false);
   saving = signal(false);
@@ -71,6 +73,10 @@ export class EquipoFormComponent implements OnInit {
       this.equipoId = +id;
       this.loadEquipo(this.equipoId);
     }
+  }
+
+  onCancel(): void {
+    this.location.back();
   }
 
   loadCatalogs(): void {
@@ -279,7 +285,5 @@ export class EquipoFormComponent implements OnInit {
     });
   }
 
-  onCancel(): void {
-    this.router.navigate(['/equipos']);
-  }
+
 }

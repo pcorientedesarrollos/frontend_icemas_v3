@@ -1,128 +1,107 @@
 <div class="space-y-6">
-      <!-- Header -->
-      <div class="flex justify-between items-center px-1">
+  <!-- Header -->
+  <div class="flex items-center gap-3 px-1">
+    <button (click)="onCancel()"
+      class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+    </button>
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
+        {{ isEditMode() ? 'Editar Sucursal' : 'Nueva Sucursal' }}
+      </h1>
+      <p class="text-gray-500 text-sm mt-1">
+        {{ isEditMode() ? 'Modificar información de la sucursal' : 'Registrar una nueva sucursal' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Form Card -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="p-6 space-y-6">
+
+      <!-- Cliente (solo si no viene de un cliente específico) -->
+      @if (!preselectedClienteId()) {
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Cliente <span class="text-red-500">*</span>
+        </label>
+        <app-searchable-select [options]="clientes()" valueKey="idCliente" labelKey="nombre" formControlName="idCliente"
+          placeholder="Seleccionar Cliente...">
+        </app-searchable-select>
+        @if (form.get('idCliente')?.touched && form.get('idCliente')?.errors?.['required']) {
+        <p class="mt-1.5 text-sm text-red-500">El cliente es requerido</p>
+        }
+      </div>
+      }
+
+      <!-- Nombre -->
+      <div>
+        <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">
+          Nombre de la Sucursal <span class="text-red-500">*</span>
+        </label>
+        <input type="text" id="nombre" formControlName="nombre"
+          class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700"
+          placeholder="Ej: Sucursal Centro" />
+        @if (form.get('nombre')?.touched && form.get('nombre')?.errors?.['required']) {
+        <p class="mt-1.5 text-sm text-red-500">El nombre es requerido</p>
+        }
+      </div>
+
+      <!-- Dirección -->
+      <div>
+        <label for="direccion" class="block text-sm font-medium text-gray-700 mb-2">
+          Dirección
+        </label>
+        <input type="text" id="direccion" formControlName="direccion"
+          class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700"
+          placeholder="Ej: Calle Principal #123, Colonia Centro" />
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Teléfono -->
         <div>
-          <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
-            {{ isEditMode() ? 'Editar Sucursal' : 'Nueva Sucursal' }}
-          </h1>
-          <p class="text-gray-500 text-sm mt-1">
-            {{ isEditMode() ? 'Modificar información de la sucursal' : 'Registrar una nueva sucursal' }}
-          </p>
+          <label for="telefono" class="block text-sm font-medium text-gray-700 mb-2">
+            Teléfono
+          </label>
+          <input type="tel" id="telefono" formControlName="telefono"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700"
+            placeholder="Ej: 55 1234 5678" />
+        </div>
+
+        <!-- Contacto -->
+        <div>
+          <label for="contacto" class="block text-sm font-medium text-gray-700 mb-2">
+            Nombre del Contacto
+          </label>
+          <input type="text" id="contacto" formControlName="contacto"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700"
+            placeholder="Ej: Juan Pérez" />
         </div>
       </div>
 
-      <!-- Form Card -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="p-6 space-y-6">
-          
-          <!-- Cliente (solo si no viene de un cliente específico) -->
-          @if (!preselectedClienteId()) {
-            <div>
-              <label for="idCliente" class="block text-sm font-medium text-gray-700 mb-2">
-                Cliente <span class="text-red-500">*</span>
-              </label>
-              <select
-                id="idCliente"
-                formControlName="idCliente"
-                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700"
-              >
-                <option value="">Seleccionar cliente</option>
-                @for (cliente of clientes(); track cliente.idCliente) {
-                  <option [value]="cliente.idCliente">{{ cliente.nombre }} - {{ cliente.empresa }}</option>
-                }
-              </select>
-              @if (form.get('idCliente')?.touched && form.get('idCliente')?.errors?.['required']) {
-                <p class="mt-1.5 text-sm text-red-500">El cliente es requerido</p>
-              }
-            </div>
+      <!-- Actions -->
+      <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+        <button type="button" (click)="onCancel()"
+          class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors">
+          Cancelar
+        </button>
+        <button type="submit" [disabled]="form.invalid || saving()"
+          class="px-5 py-2.5 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+          @if (saving()) {
+          <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
+          </svg>
+          <span>Guardando...</span>
+          } @else {
+          <span>{{ isEditMode() ? 'Actualizar' : 'Guardar' }}</span>
           }
-
-          <!-- Nombre -->
-          <div>
-            <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">
-              Nombre de la Sucursal <span class="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="nombre"
-              formControlName="nombre"
-              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700"
-              placeholder="Ej: Sucursal Centro"
-            />
-            @if (form.get('nombre')?.touched && form.get('nombre')?.errors?.['required']) {
-              <p class="mt-1.5 text-sm text-red-500">El nombre es requerido</p>
-            }
-          </div>
-
-          <!-- Dirección -->
-          <div>
-            <label for="direccion" class="block text-sm font-medium text-gray-700 mb-2">
-              Dirección
-            </label>
-            <input
-              type="text"
-              id="direccion"
-              formControlName="direccion"
-              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700"
-              placeholder="Ej: Calle Principal #123, Colonia Centro"
-            />
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Teléfono -->
-            <div>
-              <label for="telefono" class="block text-sm font-medium text-gray-700 mb-2">
-                Teléfono
-              </label>
-              <input
-                type="tel"
-                id="telefono"
-                formControlName="telefono"
-                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700"
-                placeholder="Ej: 55 1234 5678"
-              />
-            </div>
-
-            <!-- Contacto -->
-            <div>
-              <label for="contacto" class="block text-sm font-medium text-gray-700 mb-2">
-                Nombre del Contacto
-              </label>
-              <input
-                type="text"
-                id="contacto"
-                formControlName="contacto"
-                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-gray-700"
-                placeholder="Ej: Juan Pérez"
-              />
-            </div>
-          </div>
-
-          <!-- Actions -->
-          <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              (click)="onCancel()"
-              class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              [disabled]="form.invalid || saving()"
-              class="px-5 py-2.5 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              @if (saving()) {
-                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Guardando...</span>
-              } @else {
-                <span>{{ isEditMode() ? 'Actualizar' : 'Guardar' }}</span>
-              }
-            </button>
-          </div>
-        </form>
+        </button>
       </div>
-    </div>
+    </form>
+  </div>
+</div>

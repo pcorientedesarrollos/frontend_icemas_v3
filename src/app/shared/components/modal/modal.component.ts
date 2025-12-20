@@ -1,7 +1,7 @@
 import { Component, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type ModalSize = 'sm' | 'md' | 'lg' | 'xl';
+export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'fit';
 export type ModalType = 'info' | 'success' | 'warning' | 'danger';
 
 @Component({
@@ -116,9 +116,15 @@ export class ModalComponent {
       sm: 'max-w-sm',
       md: 'max-w-md',
       lg: 'max-w-2xl',
-      xl: 'max-w-4xl'
+      xl: 'max-w-4xl',
+      '2xl': 'max-w-6xl',
+      fit: 'w-fit max-w-[90vw]'
     };
-    return `w-full ${sizeClasses[this.size()]}`;
+
+    // For 'fit', we don't want w-full forcing expansion, but for others we do (to fill the max-w container)
+    const widthClass = this.size() === 'fit' ? '' : 'w-full';
+
+    return `${widthClass} ${sizeClasses[this.size()]}`;
   }
 
   iconWrapperClass(): string {

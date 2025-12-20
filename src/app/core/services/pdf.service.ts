@@ -39,8 +39,8 @@ export interface ServiceOrderData {
 export class PdfService {
 
     private readonly COLORS = {
-        primary: '#4F46E5',    // Indigo
-        secondary: '#0891B2',  // Cyan
+        primary: '#F5A623',    // Brand Orange
+        secondary: '#E89317',  // Darker Orange
         text: '#1F2937',       // Gray 800
         lightText: '#6B7280',  // Gray 500
         border: '#E5E7EB',     // Gray 200
@@ -105,8 +105,8 @@ export class PdfService {
 
     private drawHeader(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number, logoData: string): number {
         // Header Background
-        // Custom Blue: #81c9fa -> 129, 201, 250
-        doc.setFillColor(129, 201, 250);
+        // Brand Orange: #F5A623 -> 245, 166, 35
+        doc.setFillColor(245, 166, 35);
         doc.rect(0, 0, pageWidth, 28, 'F'); // Increased height slightly
 
         // Logo
@@ -167,7 +167,7 @@ export class PdfService {
     private drawServiceInfo(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number): number {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(79, 70, 229);
+        doc.setTextColor(245, 166, 35); // Brand Orange
         doc.text('INFORMACIÓN DEL SERVICIO', margin, yPos);
 
         yPos += 8;
@@ -206,7 +206,7 @@ export class PdfService {
     private drawClientInfo(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number): number {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(79, 70, 229);
+        doc.setTextColor(245, 166, 35); // Brand Orange
         doc.text('DATOS DEL CLIENTE', margin, yPos);
 
         yPos += 8;
@@ -272,7 +272,7 @@ export class PdfService {
     private drawEquipmentInfo(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number): number {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(79, 70, 229);
+        doc.setTextColor(245, 166, 35); // Brand Orange
         doc.text('EQUIPO', margin, yPos);
 
         yPos += 8;
@@ -320,7 +320,7 @@ export class PdfService {
     private drawWorkDetails(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number): number {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(79, 70, 229);
+        doc.setTextColor(245, 166, 35); // Brand Orange
         doc.text('DETALLE DEL TRABAJO', margin, yPos);
 
         yPos += 8;
@@ -366,7 +366,7 @@ export class PdfService {
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(79, 70, 229);
+        doc.setTextColor(245, 166, 35); // Brand Orange
         doc.text('FIRMA DEL CLIENTE', margin, yPos);
 
         yPos += 8;
@@ -412,7 +412,7 @@ export class PdfService {
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(79, 70, 229);
+        doc.setTextColor(245, 166, 35); // Brand Orange
         doc.text('FOTOS DEL SERVICIO', margin, yPos);
 
         yPos += 8;

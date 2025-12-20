@@ -49,5 +49,9 @@ export class ClientesService {
     getServicios(id: number): Observable<any[]> {
         return this.api.get<any[]>(`clientes/${id}/servicios`);
     }
+
+    getEquipos(id: number): Observable<any[]> {
+        return this.api.get<any[]>(`clientes/${id}/equipos`);
+    }
 }
 

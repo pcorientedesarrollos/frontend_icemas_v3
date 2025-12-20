@@ -1,18 +1,19 @@
 import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { SucursalesService } from '../sucursales.service';
 import { ClientesService } from '../../clientes.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-sucursal-form',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, SearchableSelectComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sucursal-form.component.html',
-    styleUrl: './sucursal-form.component.css',
-    })
+  styleUrl: './sucursal-form.component.css',
+})
 export class SucursalFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
@@ -20,6 +21,7 @@ export class SucursalFormComponent implements OnInit {
   private sucursalesService = inject(SucursalesService);
   private clientesService = inject(ClientesService);
   private notificationService = inject(NotificationService);
+  private location = inject(Location);
 
   isEditMode = signal(false);
   saving = signal(false);
@@ -116,12 +118,7 @@ export class SucursalFormComponent implements OnInit {
     });
   }
 
-  onCancel(): void {
-    const clienteId = this.preselectedClienteId();
-    if (clienteId) {
-      this.router.navigate(['/clientes', clienteId]);
-    } else {
-      this.router.navigate(['/sucursales']);
-    }
+  onCancel() {
+    this.location.back();
   }
 }

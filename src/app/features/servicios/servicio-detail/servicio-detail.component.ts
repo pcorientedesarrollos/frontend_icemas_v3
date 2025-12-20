@@ -5,6 +5,8 @@ import { ServiciosService } from '../servicios.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { PdfService, ServiceOrderData } from '../../../core/services/pdf.service';
 
+import { Location } from '@angular/common';
+
 @Component({
   selector: 'app-servicio-detail',
   standalone: true,
@@ -18,6 +20,7 @@ export class ServicioDetailComponent implements OnInit {
   private serviciosService = inject(ServiciosService);
   private notificationService = inject(NotificationService);
   private pdfService = inject(PdfService);
+  private location = inject(Location);
 
   servicio = signal<any>(null);
   loading = signal(true);
@@ -60,7 +63,7 @@ export class ServicioDetailComponent implements OnInit {
   }
 
   navigateBack(): void {
-    this.router.navigate(['/servicios']);
+    this.location.back();
   }
 
   async generatePdf(): Promise<void> {

@@ -6,6 +6,8 @@ import { TiposEquipoService } from '../tipos-equipo.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { UniqueTipoEquipoNameValidator } from '../../../core/validators/unique-tipo-equipo-name.validator';
 
+import { Location } from '@angular/common';
+
 @Component({
     selector: 'app-tipo-equipo-form',
     standalone: true,
@@ -19,6 +21,7 @@ export class TipoEquipoFormComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private tiposService = inject(TiposEquipoService);
     private notificationService = inject(NotificationService);
+    private location = inject(Location);
     private uniqueNameValidator = inject(UniqueTipoEquipoNameValidator);
 
     isEditMode = signal(false);
@@ -79,6 +82,6 @@ export class TipoEquipoFormComponent implements OnInit {
     }
 
     onCancel(): void {
-        this.router.navigate(['/catalogos/tipos-equipo']);
+        this.location.back();
     }
 }

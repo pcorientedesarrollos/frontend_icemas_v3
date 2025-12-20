@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TecnicosService } from '../tecnicos.service';
 import { DataTableComponent, DataTableColumn } from '../../../shared/components/data-table/data-table.component';
@@ -11,12 +11,13 @@ import { NotificationService } from '../../../core/services/notification.service
     imports: [CommonModule, DataTableComponent],
     templateUrl: './tecnico-detail.component.html',
     styleUrl: './tecnico-detail.component.css',
-    })
+})
 export class TecnicoDetailComponent implements OnInit {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private tecnicosService = inject(TecnicosService);
     private notificationService = inject(NotificationService);
+    private location = inject(Location);
 
     tecnico = signal<any>(null);
     servicios = signal<any[]>([]);
@@ -93,6 +94,7 @@ export class TecnicoDetailComponent implements OnInit {
     }
 
     navigateBack(): void {
-        this.router.navigate(['/tecnicos']);
+        this.location.back();
     }
 }
+

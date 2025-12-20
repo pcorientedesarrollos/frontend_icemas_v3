@@ -1,1 +1,85 @@
-/* DashboardComponent Styles */
+/* Google Calendar-like Styling */
+:host ::ng-deep {
+
+    /* Header Toolbar */
+    .fc-toolbar-title {
+        font-size: 1.25rem !important;
+        font-weight: 500 !important;
+        color: #374151;
+    }
+
+    .fc-button-primary {
+        background-color: white !important;
+        border-color: #e5e7eb !important;
+        color: #374151 !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        font-weight: 500 !important;
+        text-transform: capitalize;
+        transition: all 0.2s;
+    }
+
+    .fc-button-primary:hover {
+        background-color: #f9fafb !important;
+        color: #111827 !important;
+    }
+
+    .fc-button-primary:not(:disabled).fc-button-active,
+    .fc-button-primary:not(:disabled):active {
+        background-color: #eff6ff !important;
+        border-color: #bfdbfe !important;
+        color: #1d4ed8 !important;
+        box-shadow: none !important;
+    }
+
+    /* Today Button */
+    .fc-today-button {
+        margin-right: 1rem !important;
+    }
+
+    /* Calendar Grid */
+    .fc-theme-standard td,
+    .fc-theme-standard th {
+        border-color: #e5e7eb !important;
+    }
+
+    .fc-col-header-cell {
+        padding: 8px 0 !important;
+        background-color: #fff !important;
+    }
+
+    .fc-col-header-cell-cushion {
+        font-weight: 600 !important;
+        color: #6b7280 !important;
+        text-decoration: none !important;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+    }
+
+    .fc-daygrid-day-number {
+        font-size: 0.875rem;
+        color: #374151;
+        text-decoration: none !important;
+        padding: 8px !important;
+    }
+
+    .fc-day-today {
+        background-color: #f9fafb !important;
+    }
+
+    /* Events */
+    .fc-event {
+        border: none !important;
+        border-radius: 4px !important;
+        padding: 2px 4px !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+        cursor: pointer;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+
+    .fc-daygrid-event-dot {
+        display: none;
+    }
+
+    /* Event Colors are handled in the component via 'color' property */
+}

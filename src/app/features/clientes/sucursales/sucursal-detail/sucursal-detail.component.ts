@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { SucursalesService } from '../sucursales.service';
 import { DataTableComponent, DataTableColumn, DataTableAction } from '../../../../shared/components/data-table/data-table.component';
@@ -19,6 +19,7 @@ export class SucursalDetailComponent implements OnInit {
     private sucursalesService = inject(SucursalesService);
     private notificationService = inject(NotificationService);
     private destroyRef = inject(DestroyRef);
+    private location = inject(Location);
 
     sucursal = signal<any>(null);
     equipos = signal<any[]>([]);

@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TecnicosService } from '../tecnicos.service';
@@ -11,13 +11,14 @@ import { NotificationService } from '../../../core/services/notification.service
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './tecnico-form.component.html',
     styleUrl: './tecnico-form.component.css',
-    })
+})
 export class TecnicoFormComponent implements OnInit {
     private fb = inject(FormBuilder);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private tecnicosService = inject(TecnicosService);
     private notificationService = inject(NotificationService);
+    private location = inject(Location);
 
     isEditMode = signal(false);
     saving = signal(false);
@@ -88,6 +89,6 @@ export class TecnicoFormComponent implements OnInit {
     }
 
     onCancel(): void {
-        this.router.navigate(['/tecnicos']);
+        this.location.back();
     }
 }

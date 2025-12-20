@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -15,11 +15,12 @@ import { SignaturePadComponent } from '../../../shared/components/signature-pad/
 import { PhotoCaptureComponent, ServicePhoto } from '../../../shared/components/photo-capture/photo-capture.component';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { UniqueFolioValidator } from '../../../core/validators/unique-folio.validator';
+import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-servicio-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SignaturePadComponent, PhotoCaptureComponent, ModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, SignaturePadComponent, PhotoCaptureComponent, ModalComponent, SearchableSelectComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './servicio-form.component.html',
   styleUrl: './servicio-form.component.css'
@@ -28,6 +29,7 @@ export class ServicioFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private location = inject(Location);
   private serviciosService = inject(ServiciosService);
   private clientesService = inject(ClientesService);
   private tecnicosService = inject(TecnicosService);
@@ -500,7 +502,7 @@ export class ServicioFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/servicios']);
+    this.location.back();
   }
 
   onSignatureSaved(signatureBase64: string): void {

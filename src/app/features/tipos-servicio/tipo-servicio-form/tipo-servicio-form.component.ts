@@ -1,15 +1,17 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { TiposServicioService } from '../tipos-servicio.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { UniqueTipoServicioNameValidator } from '../../../core/validators/unique-tipo-servicio-name.validator';
 
+import { Location } from '@angular/common';
+
 @Component({
     selector: 'app-tipo-servicio-form',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule],
+    imports: [CommonModule, ReactiveFormsModule, RouterModule],
     templateUrl: './tipo-servicio-form.component.html',
     styleUrl: './tipo-servicio-form.component.css'
 })
@@ -20,6 +22,7 @@ export class TipoServicioFormComponent implements OnInit {
     private tiposService = inject(TiposServicioService);
     private notificationService = inject(NotificationService);
     private uniqueNameValidator = inject(UniqueTipoServicioNameValidator);
+    private location = inject(Location);
 
     isEditMode = signal(false);
     saving = signal(false);
@@ -79,6 +82,6 @@ export class TipoServicioFormComponent implements OnInit {
     }
 
     onCancel(): void {
-        this.router.navigate(['/catalogos/tipos-servicio']);
+        this.location.back();
     }
 }
