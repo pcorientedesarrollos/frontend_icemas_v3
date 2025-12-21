@@ -1,54 +1,50 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { EquiposService } from '../equipos.service';
+import { ClientesService } from '../../clientes/clientes.service';
 import { DataTableComponent, DataTableColumn, DataTableAction } from '../../../shared/components/data-table/data-table.component';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { NotificationService } from '../../../core/services/notification.service';
-import { AdvancedFiltersComponent, FilterField, FilterValues } from '../../../shared/components/advanced-filters/advanced-filters.component';
 
 @Component({
   selector: 'app-equipos-list',
   standalone: true,
-  imports: [CommonModule, DataTableComponent, ModalComponent, AdvancedFiltersComponent],
+  imports: [CommonModule, DataTableComponent, ModalComponent, FormsModule],
   templateUrl: './equipos-list.component.html',
   styleUrl: './equipos-list.component.css'
 })
 export class EquiposListComponent implements OnInit {
   private equiposService = inject(EquiposService);
+  private clientesService = inject(ClientesService);
   private router = inject(Router);
   private notificationService = inject(NotificationService);
 
   equipos = signal<any[]>([]);
-  allEquipos = signal<any[]>([]); // Store all data for client-side filtering
   loading = signal(true);
   showDeleteModal = signal(false);
   selectedEquipo = signal<any>(null);
 
-  // Filter configuration
-  filterFields: FilterField[] = [
-    { key: 'nombre', label: 'Nombre', type: 'text', placeholder: 'Buscar por nombre...' },
-    { key: 'modelo', label: 'Modelo', type: 'text', placeholder: 'Buscar por modelo...' },
-    { key: 'serie', label: 'No. Serie', type: 'text', placeholder: 'Buscar por serie...' },
-    {
-      key: 'estado',
-      label: 'Estado',
-      type: 'select',
-      options: [
-        { value: '1', label: 'Activo' },
-        { value: '0', label: 'Inactivo' }
-      ]
-    }
-  ];
+  // Filters
+  searchTerm = signal('');
+  selectedStatus = signal('Todos'); // 'Todos', 'Activo', 'Inactivo'
+  selectedCliente = signal<number | 'all'>('all');
+  selectedSucursal = signal<number | 'all'>('all');
+
+  statuses = ['Todos', 'Activo', 'Inactivo'];
+  clientes = signal<any[]>([]);
+  sucursales = signal<any[]>([]);
 
   columns: DataTableColumn[] = [
-    { key: 'idEquipo', label: 'ID', sortable: true, hideOnMobile: true, width: 'w-1 whitespace-nowrap' },
-    { key: 'nombre', label: 'Nombre', sortable: true },
-    { key: 'modelo', label: 'Modelo', sortable: true, hideOnMobile: true, width: 'whitespace-nowrap' },
-    { key: 'serie', label: 'Serie', sortable: false, hideOnMobile: true, width: 'whitespace-nowrap' },
-    { key: 'createdAt', label: 'Creado', sortable: true, hideOnMobile: true, format: (value) => value ? new Date(value).toLocaleDateString('es-MX') + ' ' + new Date(value).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : 'N/A', width: 'whitespace-nowrap' },
-    { key: 'updatedAt', label: 'Modificado', sortable: true, hideOnMobile: true, format: (value) => value ? new Date(value).toLocaleDateString('es-MX') + ' ' + new Date(value).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : 'N/A', width: 'whitespace-nowrap' },
-    { key: 'estado', label: 'Estado', sortable: true, type: 'badge', format: (value) => value === 1 ? 'Activo' : 'Inactivo', width: 'w-1 whitespace-nowrap' }
+    { key: 'idEquipo', label: 'ID', sortable: true, hideOnMobile: true, width: 'w-16 font-bold text-gray-900' },
+    { key: 'nombre', label: 'EQUIPO', sortable: true, format: (val) => val?.toUpperCase() },
+    { key: 'modelo', label: 'MODELO', sortable: true, maxWidth: '150px', hideOnMobile: true, format: (val) => val?.toUpperCase() || '' },
+    { key: 'marca.nombre', label: 'MARCA', sortable: true, maxWidth: '150px', hideOnMobile: true, format: (val) => val?.toUpperCase() || '' },
+    { key: 'serie', label: 'SERIE', sortable: false, hideOnMobile: true, width: 'whitespace-nowrap', format: (val) => val?.toUpperCase() || '' },
+    { key: 'cliente.nombre', label: 'CLIENTE', sortable: true, maxWidth: '200px', hideOnMobile: true, format: (val) => val?.toUpperCase() },
+    { key: 'sucursal.nombre', label: 'SUCURSAL', sortable: true, maxWidth: '200px', hideOnMobile: true, format: (val) => val?.toUpperCase() || 'N/A' },
+    { key: 'estado', label: 'ESTADO', sortable: true, type: 'badge', format: (value) => value === 1 ? 'Activo' : 'Inactivo', width: 'w-1 whitespace-nowrap' }
   ];
 
   actions: DataTableAction[] = [
@@ -69,16 +65,98 @@ export class EquiposListComponent implements OnInit {
     }
   ];
 
+  // Computed properties for searchable selects
+  clientesOptions = computed(() => [
+    { idCliente: 'all', nombre: 'Todos los Clientes' },
+    ...this.clientes()
+  ]);
+
+  sucursalesOptions = computed(() => [
+    { idSucursal: 'all', nombre: 'Todas las Sucursales' },
+    ...this.sucursales()
+  ]);
+
+  statusesOptions = computed(() =>
+    this.statuses.map(s => ({ value: s, label: s }))
+  );
+
+  constructor() {
+    // Load clientes for filter
+    this.clientesService.getAll('').subscribe({
+      next: (data) => this.clientes.set(data),
+      error: () => { } // Silent fail
+    });
+
+    // Load all sucursales for filter
+    this.clientesService.getAll('').subscribe({
+      next: (clientes) => {
+        const allSucursales: any[] = [];
+        clientes.forEach(cliente => {
+          this.clientesService.getSucursales(cliente.idCliente).subscribe({
+            next: (sucursales) => {
+              allSucursales.push(...sucursales);
+              const uniqueSucursales = allSucursales.filter((s, index, self) =>
+                index === self.findIndex(t => t.idSucursal === s.idSucursal)
+              );
+              this.sucursales.set(uniqueSucursales);
+            },
+            error: () => { } // Silent fail
+          });
+        });
+      },
+      error: () => { } // Silent fail
+    });
+
+    // React to filter changes
+    effect(() => {
+      // Read all filter signals to track changes
+      this.searchTerm();
+      this.selectedStatus();
+      this.selectedCliente();
+      this.selectedSucursal();
+
+      // Trigger load when any filter changes
+      this.loadEquipos();
+    }, { allowSignalWrites: true });
+  }
+
   ngOnInit(): void {
-    this.loadEquipos();
+    // Initial load handled by effect
   }
 
   loadEquipos(): void {
     this.loading.set(true);
-    this.equiposService.getAll().subscribe({
+
+    const filters: any = {};
+
+    if (this.selectedStatus() === 'Activo') {
+      filters.estado = 1;
+    } else if (this.selectedStatus() === 'Inactivo') {
+      filters.estado = 0;
+    }
+
+    if (this.searchTerm()) {
+      filters.search = this.searchTerm();
+    }
+
+    this.equiposService.getAll(filters).subscribe({
       next: (data) => {
-        this.allEquipos.set(data); // Store all data
-        this.equipos.set(data); // Initially show all
+        // Apply additional frontend filters
+        let filteredData = data;
+
+        // Filter by Cliente
+        if (this.selectedCliente() !== 'all') {
+          const clienteId = Number(this.selectedCliente());
+          filteredData = filteredData.filter(e => e.cliente?.idCliente === clienteId);
+        }
+
+        // Filter by Sucursal
+        if (this.selectedSucursal() !== 'all') {
+          const sucursalId = Number(this.selectedSucursal());
+          filteredData = filteredData.filter(e => e.sucursal?.idSucursal === sucursalId);
+        }
+
+        this.equipos.set(filteredData);
         this.loading.set(false);
       },
       error: () => {
@@ -87,6 +165,23 @@ export class EquiposListComponent implements OnInit {
       }
     });
   }
+
+  refresh(): void {
+    this.loadEquipos();
+  }
+
+  resetFilters(): void {
+    this.searchTerm.set('');
+    this.selectedStatus.set('Todos');
+    this.selectedCliente.set('all');
+    this.selectedSucursal.set('all');
+  }
+
+  activeFiltersCount = computed(() => {
+    let count = 0;
+    if (this.selectedStatus() !== 'Todos') count++;
+    return count;
+  });
 
   navigateToNew(): void {
     this.router.navigate(['/equipos/nuevo']);
@@ -114,39 +209,11 @@ export class EquiposListComponent implements OnInit {
     });
   }
 
-  // Filter methods
-  onFiltersChanged(filters: FilterValues): void {
-    let filtered = [...this.allEquipos()];
-
-    // Apply filters
-    Object.keys(filters).forEach(key => {
-      const value = filters[key];
-      if (value !== null && value !== undefined && value !== '') {
-        filtered = filtered.filter(equipo => {
-          switch (key) {
-            case 'nombre':
-              return equipo.nombre?.toLowerCase().includes(value.toLowerCase());
-            case 'modelo':
-              // Handle null/undefined modelo values
-              if (!equipo.modelo) return false;
-              return equipo.modelo.toLowerCase().includes(value.toLowerCase());
-            case 'serie':
-              // Handle null/undefined serie values
-              if (!equipo.serie) return false;
-              return equipo.serie.toLowerCase().includes(value.toLowerCase());
-            case 'estado':
-              return equipo.estado?.toString() === value.toString();
-            default:
-              return true;
-          }
-        });
-      }
-    });
-
-    this.equipos.set(filtered);
-  }
-
-  onFiltersCleared(): void {
-    this.equipos.set([...this.allEquipos()]);
+  getCountByEstado(statusCheck: string): number {
+    return this.equipos().filter(e => {
+      if (statusCheck === 'Activo') return e.estado === 1;
+      if (statusCheck === 'Inactivo') return e.estado === 0;
+      return false;
+    }).length;
   }
 }

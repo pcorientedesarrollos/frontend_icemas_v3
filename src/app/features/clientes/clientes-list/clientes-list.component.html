@@ -8,8 +8,8 @@
   </div>
 
   <!-- Table with Integrated Header -->
-  <app-catalog-table [data]="clientes()" [columns]="columns" [actions]="actions" [loading]="loading()"
-    [searchable]="false">
+  <app-data-table [data]="clientes()" [columns]="columns" [actions]="actions" [loading]="loading()" [searchable]="false"
+    title="Clientes">
     <!-- Quick Search in place of old search bar -->
     <div header-search class="w-full sm:w-72">
       <app-autocomplete-input placeholder="Buscar cliente..." [options]="autocompleteOptions()"
@@ -25,7 +25,7 @@
       </svg>
       <span>Nuevo Cliente</span>
     </button>
-  </app-catalog-table>
+  </app-data-table>
 
   <!-- Delete Confirmation Modal -->
   <app-modal [isOpen]="showDeleteModal()" title="Confirmar Eliminación" type="danger" confirmButtonText="Eliminar"
@@ -41,9 +41,9 @@
   <app-modal [isOpen]="showSucursalesModal()" [title]="'Sucursales - ' + selectedClienteForSucursales()?.nombre"
     size="fit" [showFooter]="false" (closed)="closeSucursalesModal()">
     <div class="h-96 w-full"> <!-- Fixed height for scrolling -->
-      <app-catalog-table [data]="sucursalesData()" [columns]="sucursalesColumns" [loading]="sucursalesLoading()"
+      <app-data-table [data]="sucursalesData()" [columns]="sucursalesColumns" [loading]="sucursalesLoading()"
         [searchable]="false" [pageSize]="5">
-      </app-catalog-table>
+      </app-data-table>
     </div>
   </app-modal>
 </div>

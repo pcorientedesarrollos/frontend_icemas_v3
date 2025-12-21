@@ -85,8 +85,10 @@ export class EquipoFormComponent implements OnInit {
       error: () => this.notificationService.error('Error al cargar clientes')
     });
 
-    this.equiposService.getMarcas().subscribe({
-      next: (data) => this.marcas.set(data),
+    this.equiposService.getMarcas().subscribe({ // Keep as is... wait, I checked frontend service and it IS getMarcas()
+      next: (data) => {
+        this.marcas.set(data);
+      },
       error: () => this.notificationService.error('Error al cargar marcas')
     });
 
@@ -130,10 +132,21 @@ export class EquipoFormComponent implements OnInit {
     this.sucursales.set([]);
 
     if (idCliente) {
+      this.form.get('idSucursal')?.enable();
       this.clientesService.getSucursales(+idCliente).subscribe({
-        next: (data) => this.sucursales.set(data),
-        error: () => this.notificationService.error('Error al cargar sucursales')
+        next: (data) => {
+          this.sucursales.set(data);
+          if (data.length === 0) {
+            this.form.get('idSucursal')?.disable();
+          }
+        },
+        error: () => {
+          this.notificationService.error('Error al cargar sucursales');
+          this.form.get('idSucursal')?.disable();
+        }
       });
+    } else {
+      this.form.get('idSucursal')?.disable();
     }
   }
 

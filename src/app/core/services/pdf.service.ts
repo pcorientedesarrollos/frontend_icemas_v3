@@ -40,8 +40,8 @@ export interface ServiceOrderData {
 export class PdfService {
 
     private readonly COLORS = {
-        primary: '#F5A623',    // Brand Orange
-        secondary: '#E89317',  // Darker Orange
+        primary: '#4d82bc',    // Brand Blue
+        secondary: '#3B6EA5',  // Darker Blue
         text: '#1F2937',       // Gray 800
         lightText: '#6B7280',  // Gray 500
         border: '#E5E7EB',     // Gray 200
@@ -58,12 +58,13 @@ export class PdfService {
             format: 'a4'
         });
 
-        // Load Logo
+        // Load Logo with timeout
         let logoData = '';
         try {
-            logoData = await this.loadImage('/image/Logo_icemas_circular.png');
+            logoData = await this.loadImage('/image/Logo_icemas_circular.png', 2000);
         } catch (e) {
-            console.error('Could not load logo for PDF', e);
+            console.warn('Logo not loaded, continuing without it:', e);
+            // Continue without logo
         }
 
         const pageWidth = doc.internal.pageSize.getWidth();
@@ -87,30 +88,37 @@ export class PdfService {
         yPos = this.drawWorkDetails(doc, data, margin, yPos, pageWidth);
 
         // ===== SIGNATURE =====
-        if (data.firmaCliente) {
-            yPos = this.drawSignature(doc, data, margin, yPos, pageWidth, pageHeight);
+        if (data.firmaCliente || data.firmaTecnico) {
+            try {
+                yPos = this.drawSignature(doc, data, margin, yPos, pageWidth, pageHeight);
+            } catch (e) {
+                console.warn('Error drawing signatures:', e);
+            }
         }
 
-        // ===== PHOTOS =====
+        // ===== PHOTOS ===== (limit to first 6 photos for performance)
         if (data.fotos && data.fotos.length > 0) {
-            yPos = this.drawPhotos(doc, data, margin, yPos, pageWidth, pageHeight);
+            try {
+                const limitedPhotos = data.fotos.slice(0, 6); // Limit to 6 photos
+                const limitedData = { ...data, fotos: limitedPhotos };
+                yPos = await this.drawPhotos(doc, limitedData, margin, yPos, pageWidth, pageHeight);
+            } catch (e) {
+                console.warn('Error loading photos, continuing without them:', e);
+            }
         }
 
         // ===== FOOTER =====
         this.drawFooter(doc, pageWidth, pageHeight, margin);
 
-        // Save the PDF
-        // Save the PDF
+        // Open PDF in new tab
         const filename = `orden_servicio_${data.folio.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-        // doc.save(filename);
-        // Preview instead of download
         window.open(doc.output('bloburl'), '_blank');
     }
 
     private drawHeader(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number, logoData: string): number {
         // Header Background
-        // Brand Orange: #F5A623 -> 245, 166, 35
-        doc.setFillColor(245, 166, 35);
+        // Brand Blue: #4d82bc -> 77, 130, 188
+        doc.setFillColor(77, 130, 188);
         doc.rect(0, 0, pageWidth, 28, 'F'); // Increased height slightly
 
         // Logo
@@ -147,31 +155,69 @@ export class PdfService {
         return 38; // Increased return Y position
     }
 
-    private loadImage(url: string): Promise<string> {
+    private loadImage(url: string, timeoutMs: number = 3000): Promise<string> {
         return new Promise((resolve, reject) => {
             const img = new Image();
             img.crossOrigin = 'Anonymous';
-            img.src = url;
+
+            // Set up timeout
+            const timeout = setTimeout(() => {
+                reject(new Error('Image load timeout'));
+            }, timeoutMs);
+
             img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                if (ctx) {
-                    ctx.drawImage(img, 0, 0);
-                    resolve(canvas.toDataURL('image/png'));
-                } else {
-                    reject(new Error('Canvas context failed'));
+                clearTimeout(timeout);
+                try {
+                    const canvas = document.createElement('canvas');
+
+                    // Limit image size to prevent memory issues
+                    const maxWidth = 800;
+                    const maxHeight = 600;
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Calculate aspect ratio
+                    if (width > maxWidth) {
+                        height = (height * maxWidth) / width;
+                        width = maxWidth;
+                    }
+                    if (height > maxHeight) {
+                        width = (width * maxHeight) / height;
+                        height = maxHeight;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.drawImage(img, 0, 0, width, height);
+                        // Use JPEG for better compression on photos
+                        const isPhoto = url.includes('fotos_servicio') || url.includes('data:image/jpeg');
+                        const dataUrl = isPhoto
+                            ? canvas.toDataURL('image/jpeg', 0.7)
+                            : canvas.toDataURL('image/png');
+                        resolve(dataUrl);
+                    } else {
+                        reject(new Error('Canvas context failed'));
+                    }
+                } catch (error) {
+                    reject(error);
                 }
             };
-            img.onerror = (e) => reject(e);
+
+            img.onerror = (e) => {
+                clearTimeout(timeout);
+                reject(e);
+            };
+
+            img.src = url;
         });
     }
 
     private drawServiceInfo(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number): number {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(245, 166, 35); // Brand Orange
+        doc.setTextColor(77, 130, 188); // Brand Blue
         doc.text('INFORMACIÓN DEL SERVICIO', margin, yPos);
 
         yPos += 8;
@@ -210,7 +256,7 @@ export class PdfService {
     private drawClientInfo(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number): number {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(245, 166, 35); // Brand Orange
+        doc.setTextColor(77, 130, 188); // Brand Blue
         doc.text('DATOS DEL CLIENTE', margin, yPos);
 
         yPos += 8;
@@ -276,7 +322,7 @@ export class PdfService {
     private drawEquipmentInfo(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number): number {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(245, 166, 35); // Brand Orange
+        doc.setTextColor(77, 130, 188); // Brand Blue
         doc.text('EQUIPO', margin, yPos);
 
         yPos += 8;
@@ -324,7 +370,7 @@ export class PdfService {
     private drawWorkDetails(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number): number {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(245, 166, 35); // Brand Orange
+        doc.setTextColor(77, 130, 188); // Brand Blue
         doc.text('DETALLE DEL TRABAJO', margin, yPos);
 
         yPos += 8;
@@ -378,7 +424,7 @@ export class PdfService {
         // --- TECHNICIAN SIGNATURE (Left) ---
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(10);
-        doc.setTextColor(245, 166, 35); // Brand Orange
+        doc.setTextColor(77, 130, 188); // Brand Blue
         doc.text('FIRMA DEL TÉCNICO', col1, yPos);
 
         // Draw Line
@@ -404,7 +450,7 @@ export class PdfService {
         // --- CLIENT SIGNATURE (Right) ---
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(10);
-        doc.setTextColor(245, 166, 35); // Brand Orange
+        doc.setTextColor(77, 130, 188); // Brand Blue
         doc.text('FIRMA DEL CLIENTE', col2, yPos);
 
         // Draw Line
@@ -428,7 +474,7 @@ export class PdfService {
         return yPos + sigHeight + 25;
     }
 
-    private drawPhotos(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number, pageHeight: number): number {
+    private async drawPhotos(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number, pageHeight: number): Promise<number> {
         if (!data.fotos || data.fotos.length === 0) return yPos;
 
         // Check if we need a new page
@@ -439,7 +485,7 @@ export class PdfService {
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(245, 166, 35); // Brand Orange
+        doc.setTextColor(77, 130, 188); // Brand Blue
         doc.text('FOTOS DEL SERVICIO', margin, yPos);
 
         yPos += 8;
@@ -455,6 +501,7 @@ export class PdfService {
 
         let col = 0;
 
+        // Process photos sequentially to avoid overwhelming the browser
         for (let i = 0; i < data.fotos.length; i++) {
             const foto = data.fotos[i];
 
@@ -467,18 +514,12 @@ export class PdfService {
 
             const xPos = margin + (col * (photoWidth + gapX));
 
+            // Try to add photo with timeout
             try {
-                // Add photo
-                doc.addImage(foto.url, 'JPEG', xPos, yPos, photoWidth, photoHeight);
-
-                // Add label below photo
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(8);
-                doc.setTextColor(107, 114, 128);
-                const label = foto.tipo === 'antes' ? 'Antes del servicio' : 'Después del servicio';
-                doc.text(label, xPos + photoWidth / 2, yPos + photoHeight + 4, { align: 'center' });
-            } catch (e) {
-                // If image fails, show placeholder
+                await this.addPhotoToPdf(doc, foto.url, xPos, yPos, photoWidth, photoHeight, foto.tipo);
+            } catch (error) {
+                // If photo fails, show placeholder
+                console.warn(`Failed to load photo ${i + 1}:`, error);
                 doc.setDrawColor(200, 200, 200);
                 doc.rect(xPos, yPos, photoWidth, photoHeight);
                 doc.setFont('helvetica', 'italic');
@@ -486,6 +527,13 @@ export class PdfService {
                 doc.setTextColor(150, 150, 150);
                 doc.text('[Foto no disponible]', xPos + photoWidth / 2, yPos + photoHeight / 2, { align: 'center' });
             }
+
+            // Add label below photo
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor(107, 114, 128);
+            const label = foto.tipo === 'antes' ? 'Antes del servicio' : 'Después del servicio';
+            doc.text(label, xPos + photoWidth / 2, yPos + photoHeight + 4, { align: 'center' });
 
             col++;
             if (col >= photosPerRow) {
@@ -501,6 +549,18 @@ export class PdfService {
 
         return yPos + 10;
     }
+
+    private async addPhotoToPdf(doc: jsPDF, url: string, x: number, y: number, width: number, height: number, tipo: 'antes' | 'despues'): Promise<void> {
+        // Skip if URL is empty or invalid
+        if (!url || url.trim() === '') {
+            throw new Error('Invalid photo URL');
+        }
+
+        // Add photo with 2 second timeout per photo
+        const imageData = await this.loadImage(url, 2000);
+        doc.addImage(imageData, 'JPEG', x, y, width, height);
+    }
+
 
     private drawFooter(doc: jsPDF, pageWidth: number, pageHeight: number, margin: number): void {
         const footerY = pageHeight - 15;

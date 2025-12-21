@@ -1,36 +1,109 @@
-<div class="space-y-6">
-  <!-- Page Title -->
-  <div class="flex justify-between items-center px-1">
+<div class="flex flex-col h-full bg-gray-50/50 p-6 gap-6">
+
+  <!-- Header Section -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Equipos</h1>
-      <p class="text-gray-500 text-sm mt-1">Gestión de equipos e inventario</p>
+      <h1 class="text-2xl font-bold text-gray-900">Equipos</h1>
+      <p class="text-sm text-gray-500 mt-1">Gestión de equipos e inventario</p>
+    </div>
+    <button (click)="navigateToNew()"
+      class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+        class="w-4 h-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+      Nuevo Equipo
+    </button>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="flex flex-wrap justify-end gap-3">
+    <div class="bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm min-w-[120px]">
+      <div class="text-xs text-gray-500 mb-0.5">Total Equipos</div>
+      <div class="text-xl font-bold text-gray-900">{{ equipos().length }}</div>
+    </div>
+    <div class="bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm min-w-[120px]">
+      <div class="text-xs text-gray-500 mb-0.5">Activos</div>
+      <div class="text-xl font-bold text-emerald-600">{{ getCountByEstado('Activo') }}</div>
+    </div>
+    <div class="bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm min-w-[120px]">
+      <div class="text-xs text-gray-500 mb-0.5">Inactivos</div>
+      <div class="text-xl font-bold text-red-600">{{ getCountByEstado('Inactivo') }}</div>
     </div>
   </div>
 
-  <!-- Table with Integrated Header -->
-  <app-data-table [data]="equipos()" [columns]="columns" [actions]="actions" [loading]="loading()" [searchable]="false">
-    <!-- Inline Filters in header -->
-    <div header-search class="flex-1">
-      <app-advanced-filters [fields]="filterFields" [inline]="true" (filtersChanged)="onFiltersChanged($event)"
-        (filtersCleared)="onFiltersCleared()" />
-    </div>
+  <!-- Table Section -->
+  <div class="flex-1 min-h-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+    <app-data-table [data]="equipos()" [columns]="columns" [actions]="actions" [loading]="loading()"
+      [searchable]="false">
 
-    <!-- Action Button -->
-    <button header-actions (click)="navigateToNew()"
-      class="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-colors shadow-sm whitespace-nowrap">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-      </svg>
-      <span>Nuevo Equipo</span>
-    </button>
-  </app-data-table>
+      <!-- Integrated Header Filters -->
+      <div header-search class="w-full flex flex-col lg:flex-row gap-3 items-center">
+        <!-- Search Input -->
+        <div class="relative flex-1 w-full lg:w-auto min-w-[300px]">
+          <input type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
+            (keyup.enter)="loadEquipos()" placeholder="Nombre, Marca, Modelo, Serie, Cliente, Sucursal, ID..."
+            class="w-full pl-10 pr-4 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder-gray-400">
+          <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
 
-  <!-- Delete Confirmation Modal -->
-  <app-modal [isOpen]="showDeleteModal()" title="Confirmar Eliminación" type="danger" confirmButtonText="Eliminar"
-    (closed)="showDeleteModal.set(false)" (confirmed)="confirmDelete()" (cancelled)="showDeleteModal.set(false)">
-    <p class="text-gray-600">
-      ¿Estás seguro que deseas eliminar el equipo <strong>{{ selectedEquipo()?.nombre }}</strong>?
-      Esta acción no se puede deshacer.
-    </p>
-  </app-modal>
+        <!-- Filters Group -->
+        <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+
+          <!-- Cliente Filter -->
+          <select [ngModel]="selectedCliente()" (ngModelChange)="selectedCliente.set($event)"
+            class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer min-w-[160px]">
+            <option value="all">Todos los Clientes</option>
+            <option *ngFor="let cliente of clientes()" [value]="cliente.idCliente">{{ cliente.nombre }}</option>
+          </select>
+
+          <!-- Sucursal Filter -->
+          <select [ngModel]="selectedSucursal()" (ngModelChange)="selectedSucursal.set($event)"
+            class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer min-w-[160px]">
+            <option value="all">Todas las Sucursales</option>
+            <option *ngFor="let sucursal of sucursales()" [value]="sucursal.idSucursal">{{ sucursal.nombre }}</option>
+          </select>
+
+          <!-- Status Filter -->
+          <select [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)"
+            class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer min-w-[160px]">
+            <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+          </select>
+
+          <!-- Refresh Button -->
+          <button (click)="resetFilters()"
+            class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-gray-200"
+            title="Restablecer filtros">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+              stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </app-data-table>
+  </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<app-modal [isOpen]="showDeleteModal()" (close)="showDeleteModal.set(false)" title="Confirmar eliminación">
+  <div class="p-6">
+    <p class="text-gray-600 mb-6">¿Estás seguro que deseas eliminar el equipo <strong>{{ selectedEquipo()?.nombre
+        }}</strong>? Esta acción no se puede deshacer.</p>
+    <div class="flex justify-end gap-3">
+      <button (click)="showDeleteModal.set(false)"
+        class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+        Cancelar
+      </button>
+      <button (click)="confirmDelete()"
+        class="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+        Eliminar
+      </button>
+    </div>
+  </div>
+</app-modal>

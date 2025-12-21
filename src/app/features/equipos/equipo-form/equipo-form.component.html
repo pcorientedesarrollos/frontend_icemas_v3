@@ -58,15 +58,15 @@
           <div class="flex justify-between items-center mb-1">
             <label class="block text-sm font-medium text-gray-700">Marca *</label>
             <button type="button" (click)="openMarcaModal()"
-              class="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
+              class="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1">
               <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
               Nueva
             </button>
           </div>
-          <app-searchable-select [options]="marcas()" valueKey="idMarca" labelKey="nombre" formControlName="idMarca"
-            placeholder="Seleccionar Marca...">
+          <app-searchable-select [options]="marcas()" valueKey="idMarca" labelKey="descripcion"
+            formControlName="idMarca" placeholder="Seleccionar Marca...">
           </app-searchable-select>
           @if (form.get('idMarca')?.touched && form.get('idMarca')?.errors?.['required']) {
           <p class="mt-1.5 text-sm text-red-500">La marca es requerida</p>
@@ -89,7 +89,7 @@
           <div class="flex justify-between items-center mb-1">
             <label class="block text-sm font-medium text-gray-700">Cliente *</label>
             <button type="button" (click)="openClienteModal()"
-              class="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
+              class="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1">
               <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
@@ -109,7 +109,7 @@
           <div class="flex justify-between items-center mb-1">
             <label class="block text-sm font-medium text-gray-700">Sucursal *</label>
             <button type="button" (click)="openSucursalModal()" [disabled]="!form.get('idCliente')?.value"
-              class="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
+              class="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
               <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
@@ -117,7 +117,7 @@
             </button>
           </div>
           <app-searchable-select [options]="sucursales()" valueKey="idSucursal" labelKey="nombre"
-            formControlName="idSucursal" placeholder="Seleccionar Sucursal..." [disabled]="sucursales().length === 0">
+            formControlName="idSucursal" placeholder="Seleccionar Sucursal...">
           </app-searchable-select>
           @if (form.get('idSucursal')?.touched && form.get('idSucursal')?.errors?.['required']) {
           <p class="mt-1.5 text-sm text-red-500">La sucursal es requerida</p>
@@ -207,7 +207,8 @@
 </app-modal>
 
 <app-modal [isOpen]="showSucursalModal()" [showCloseButton]="false" title="Nueva Sucursal"
-  (close)="closeSucursalModal()">
+  [confirmButtonText]="'Crear Sucursal'" [confirmDisabled]="savingSucursal()" (confirmed)="createSucursalRapida()"
+  (cancelled)="closeSucursalModal()">
   <div class="space-y-4">
     <div>
       <label for="nombreSucursalEq" class="block text-sm font-medium text-gray-700 mb-2">

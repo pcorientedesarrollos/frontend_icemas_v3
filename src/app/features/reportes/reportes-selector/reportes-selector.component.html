@@ -3,7 +3,8 @@
     <div class="flex justify-between items-center px-1">
         <div>
             <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Reportes</h1>
-            <p class="text-gray-500 text-sm mt-1">Genera reportes de servicios por cliente, técnico o equipo</p>
+            <p class="text-gray-500 text-sm mt-1">Genera reportes de servicios por cliente, técnico, equipo o sucursal
+            </p>
         </div>
         @if (reportGenerated()) {
         <button (click)="clearReport()"
@@ -15,7 +16,7 @@
 
     <!-- Report Type Selection -->
     @if (!selectedReportType()) {
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Por Cliente -->
         <button (click)="selectReportType('cliente')"
             class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:border-primary-500 hover:shadow-md transition-all text-left group">
@@ -71,6 +72,24 @@
                 </div>
             </div>
         </button>
+
+        <!-- Por Sucursal -->
+        <button (click)="selectReportType('sucursal')"
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:border-primary-500 hover:shadow-md transition-all text-left group">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                    <svg class="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Por Sucursal</h3>
+                    <p class="text-sm text-gray-500">Servicios realizados en una sucursal</p>
+                </div>
+            </div>
+        </button>
     </div>
     }
 
@@ -83,6 +102,7 @@
                 @case ('cliente') { Seleccionar Cliente }
                 @case ('tecnico') { Seleccionar Técnico }
                 @case ('equipo') { Seleccionar Equipo }
+                @case ('sucursal') { Seleccionar Sucursal }
                 }
             </h2>
             <button (click)="selectedReportType.set(null)" class="text-sm text-gray-500 hover:text-gray-700">
@@ -98,25 +118,32 @@
                     @case ('cliente') { Cliente }
                     @case ('tecnico') { Técnico }
                     @case ('equipo') { Equipo }
+                    @case ('sucursal') { Sucursal }
                     }
                 </label>
                 @switch (selectedReportType()) {
                 @case ('cliente') {
                 <app-searchable-select [options]="clientes()" valueKey="idCliente" labelKey="nombre"
-                    [ngModel]="selectedEntityId()" (selectionChange)="selectedEntityId.set($event)"
+                    [ngModel]="selectedEntityId()" (selectionChange)="onEntityChange($event)"
                     placeholder="Seleccionar Cliente...">
                 </app-searchable-select>
                 }
                 @case ('tecnico') {
                 <app-searchable-select [options]="tecnicos()" valueKey="idTecnico" labelKey="nombre"
-                    [ngModel]="selectedEntityId()" (selectionChange)="selectedEntityId.set($event)"
+                    [ngModel]="selectedEntityId()" (selectionChange)="onEntityChange($event)"
                     placeholder="Seleccionar Técnico...">
                 </app-searchable-select>
                 }
                 @case ('equipo') {
                 <app-searchable-select [options]="equipos()" valueKey="idEquipo" labelKey="nombre"
-                    [ngModel]="selectedEntityId()" (selectionChange)="selectedEntityId.set($event)"
+                    [ngModel]="selectedEntityId()" (selectionChange)="onEntityChange($event)"
                     placeholder="Seleccionar Equipo...">
+                </app-searchable-select>
+                }
+                @case ('sucursal') {
+                <app-searchable-select [options]="sucursales()" valueKey="idSucursal" labelKey="nombre"
+                    [ngModel]="selectedEntityId()" (selectionChange)="onEntityChange($event)"
+                    placeholder="Seleccionar Sucursal...">
                 </app-searchable-select>
                 }
                 }

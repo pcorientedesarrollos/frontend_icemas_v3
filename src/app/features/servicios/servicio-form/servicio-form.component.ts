@@ -44,7 +44,6 @@ export class ServicioFormComponent implements OnInit {
   saving = signal(false);
   servicioId: number | null = null;
   signatureData = signal<string | null>(null);
-  technicianSignatureData = signal<string | null>(null);
   servicePhotos = signal<ServicePhoto[]>([]);
 
   // Quick-create modals
@@ -373,9 +372,6 @@ export class ServicioFormComponent implements OnInit {
           if (servicio.firma) {
             this.signatureData.set(servicio.firma);
           }
-          if (servicio.firmaTecnico) {
-            this.technicianSignatureData.set(servicio.firmaTecnico);
-          }
 
           // Load photos if exist
           if (servicio.fotos && servicio.fotos.length > 0) {
@@ -460,14 +456,6 @@ export class ServicioFormComponent implements OnInit {
             );
           }
 
-          // Upload technician signature if present
-          const technicianSignature = this.technicianSignatureData();
-          if (technicianSignature && servicio.idServicio) {
-            uploadTasks.push(
-              this.serviciosService.saveTechnicianSignature(servicio.idServicio, technicianSignature)
-            );
-          }
-
           // Upload photos if any
           const photos = this.servicePhotos();
           if (photos.length > 0 && servicio.idServicio) {
@@ -538,29 +526,6 @@ export class ServicioFormComponent implements OnInit {
 
   onSignatureCleared(): void {
     this.signatureData.set(null);
-  }
-
-  onTechnicianSignatureSaved(signatureBase64: string): void {
-    this.technicianSignatureData.set(signatureBase64);
-    this.notificationService.success('Firma del técnico capturada correctamente');
-
-    // If editing, save signature to server
-    if (this.isEditMode() && this.servicioId) {
-      this.serviciosService.saveTechnicianSignature(this.servicioId, signatureBase64)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: () => {
-            this.notificationService.success('Firma del técnico guardada en el servidor');
-          },
-          error: () => {
-            this.notificationService.error('Error al guardar la firma del técnico');
-          }
-        });
-    }
-  }
-
-  onTechnicianSignatureCleared(): void {
-    this.technicianSignatureData.set(null);
   }
 
   // Photo handlers

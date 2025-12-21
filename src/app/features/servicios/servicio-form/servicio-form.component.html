@@ -153,19 +153,11 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
-        <div>
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Firma del cliente</h3>
-          <app-signature-pad label="Firma de conformidad" [required]="false" [showSaveButton]="true"
-            [savedSignature]="signatureData()" (signatureSaved)="onSignatureSaved($event)"
-            (signatureCleared)="onSignatureCleared()" />
-        </div>
-        <div>
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Firma del técnico</h3>
-          <app-signature-pad label="Firma del técnico" [required]="false" [showSaveButton]="true"
-            [savedSignature]="technicianSignatureData()" (signatureSaved)="onTechnicianSignatureSaved($event)"
-            (signatureCleared)="onTechnicianSignatureCleared()" />
-        </div>
+      <div class="pt-4 border-t border-gray-100">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Firma del cliente</h3>
+        <app-signature-pad label="Firma de conformidad" [required]="false" [showSaveButton]="true"
+          [savedSignature]="signatureData()" (signatureSaved)="onSignatureSaved($event)"
+          (signatureCleared)="onSignatureCleared()" />
       </div>
 
       <div class="pt-4 border-t border-gray-100">

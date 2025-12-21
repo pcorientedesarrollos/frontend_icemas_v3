@@ -2,12 +2,14 @@ import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@ang
 import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { Observable } from 'rxjs';
 import { TecnicosService } from '../tecnicos.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { SignaturePadComponent } from '../../../shared/components/signature-pad/signature-pad.component';
 
 @Component({
     selector: 'app-tecnico-form',
-    imports: [CommonModule, ReactiveFormsModule],
+    imports: [CommonModule, ReactiveFormsModule, SignaturePadComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './tecnico-form.component.html',
     styleUrl: './tecnico-form.component.css',
@@ -23,6 +25,7 @@ export class TecnicoFormComponent implements OnInit {
     isEditMode = signal(false);
     saving = signal(false);
     tecnicoId: number | null = null;
+    signatureData = signal<string | null>(null);
 
     form: FormGroup = this.fb.group({
         nombre: ['', Validators.required],
@@ -51,6 +54,21 @@ export class TecnicoFormComponent implements OnInit {
                     especialidad: tecnico.especialidad,
                     activo: tecnico.activo
                 });
+
+                // Load signature if exists
+                if (tecnico.firma) {
+                    // For stored signatures, we need to construct the full path
+                    // The backend stores just the filename, we need to fetch it as base64
+                    this.tecnicosService.getSignature(id).subscribe({
+                        next: (signatureData) => {
+                            this.signatureData.set(signatureData);
+                        },
+                        error: () => {
+                            // Signature load failed, but don't block the form
+                            console.warn('Failed to load technician signature');
+                        }
+                    });
+                }
             },
             error: () => {
                 this.notificationService.error('Error al cargar el técnico');
@@ -75,11 +93,43 @@ export class TecnicoFormComponent implements OnInit {
             : this.tecnicosService.create(data);
 
         request$.subscribe({
-            next: () => {
-                this.notificationService.success(
-                    this.isEditMode() ? 'Técnico actualizado correctamente' : 'Técnico creado correctamente'
-                );
-                this.router.navigate(['/tecnicos']);
+            next: (tecnico) => {
+                const uploadTasks: Observable<any>[] = [];
+
+                // Upload signature if present
+                const signature = this.signatureData();
+                const tecnicoId = this.isEditMode() ? this.tecnicoId! : tecnico.idTecnico;
+
+                if (signature && tecnicoId) {
+                    uploadTasks.push(
+                        this.tecnicosService.saveSignature(tecnicoId, signature)
+                    );
+                }
+
+                // If there are uploads, wait for them
+                if (uploadTasks.length > 0) {
+                    import('rxjs').then(({ forkJoin }) => {
+                        forkJoin(uploadTasks).subscribe({
+                            next: () => {
+                                this.notificationService.success(
+                                    this.isEditMode() ? 'Técnico actualizado correctamente' : 'Técnico creado correctamente'
+                                );
+                                this.router.navigate(['/tecnicos']);
+                            },
+                            error: () => {
+                                this.notificationService.error('Técnico guardado pero error al subir firma');
+                                this.saving.set(false);
+                                this.router.navigate(['/tecnicos']);
+                            }
+                        });
+                    });
+                } else {
+                    // No uploads needed
+                    this.notificationService.success(
+                        this.isEditMode() ? 'Técnico actualizado correctamente' : 'Técnico creado correctamente'
+                    );
+                    this.router.navigate(['/tecnicos']);
+                }
             },
             error: () => {
                 this.notificationService.error('Error al guardar el técnico');
@@ -90,5 +140,26 @@ export class TecnicoFormComponent implements OnInit {
 
     onCancel(): void {
         this.location.back();
+    }
+
+    onSignatureSaved(signatureBase64: string): void {
+        this.signatureData.set(signatureBase64);
+        this.notificationService.success('Firma capturada correctamente');
+
+        // If editing, save signature to server immediately
+        if (this.isEditMode() && this.tecnicoId) {
+            this.tecnicosService.saveSignature(this.tecnicoId, signatureBase64).subscribe({
+                next: () => {
+                    this.notificationService.success('Firma guardada en el servidor');
+                },
+                error: () => {
+                    this.notificationService.error('Error al guardar la firma');
+                }
+            });
+        }
+    }
+
+    onSignatureCleared(): void {
+        this.signatureData.set(null);
     }
 }

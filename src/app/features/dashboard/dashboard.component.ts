@@ -193,4 +193,8 @@ export class DashboardComponent implements OnInit {
   viewCalendar() {
     this.showCalendar.update(v => !v);
   }
+
+  navigateToService(id: number) {
+    this.router.navigate(['/servicios', id]);
+  }
 }

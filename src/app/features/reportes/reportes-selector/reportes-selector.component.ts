@@ -24,12 +24,13 @@ export class ReportesSelectorComponent {
   private pdfService = inject(PdfService);
 
   // Report type selection
-  selectedReportType = signal<'cliente' | 'tecnico' | 'equipo' | null>(null);
+  selectedReportType = signal<'cliente' | 'tecnico' | 'equipo' | 'sucursal' | null>(null);
 
   // Entity selection
   clientes = signal<any[]>([]);
   tecnicos = signal<any[]>([]);
   equipos = signal<any[]>([]);
+  sucursales = signal<any[]>([]);
   selectedEntityId = signal<number | null>(null);
 
   // Report data
@@ -73,16 +74,34 @@ export class ReportesSelectorComponent {
   }
 
   setDefaultDates(): void {
+    // Set default dates to current full year (January 1 to today)
     const today = new Date();
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const firstDayOfYear = new Date(today.getFullYear(), 0, 1);
 
-    this.fechaInicio.set(firstDayOfMonth.toISOString().split('T')[0]);
+    this.fechaInicio.set(firstDayOfYear.toISOString().split('T')[0]);
     this.fechaFin.set(today.toISOString().split('T')[0]);
   }
 
   loadEntities(): void {
     this.clientesService.getAll().subscribe({
-      next: (data) => this.clientes.set(data),
+      next: (data) => {
+        this.clientes.set(data);
+        // Load all sucursales from all clientes
+        const allSucursales: any[] = [];
+        data.forEach(cliente => {
+          this.clientesService.getSucursales(cliente.idCliente).subscribe({
+            next: (sucursales) => {
+              allSucursales.push(...sucursales);
+              // Remove duplicates by idSucursal
+              const uniqueSucursales = allSucursales.filter((s, index, self) =>
+                index === self.findIndex(t => t.idSucursal === s.idSucursal)
+              );
+              this.sucursales.set(uniqueSucursales);
+            },
+            error: () => { } // Silent fail
+          });
+        });
+      },
       error: () => this.notificationService.error('Error al cargar clientes')
     });
 
@@ -97,17 +116,15 @@ export class ReportesSelectorComponent {
     });
   }
 
-  selectReportType(type: 'cliente' | 'tecnico' | 'equipo'): void {
+  selectReportType(type: 'cliente' | 'tecnico' | 'equipo' | 'sucursal'): void {
     this.selectedReportType.set(type);
     this.selectedEntityId.set(null);
     this.reportGenerated.set(false);
     this.reportData.set([]);
   }
 
-  onEntityChange(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    const value = select.value;
-    this.selectedEntityId.set(value ? +value : null);
+  onEntityChange(value: any): void {
+    this.selectedEntityId.set(value ? Number(value) : null);
   }
 
   onFechaInicioChange(value: string): void {
@@ -139,17 +156,23 @@ export class ReportesSelectorComponent {
       case 'equipo':
         this.generateEquipoReport(entityId);
         break;
+      case 'sucursal':
+        this.generateSucursalReport(entityId);
+        break;
     }
   }
 
   generateClienteReport(clienteId: number): void {
-    const cliente = this.clientes().find(c => c.idCliente === clienteId);
+    const cliente = this.clientes().find(c => Number(c.idCliente) === Number(clienteId));
+    console.log('Generating report for cliente ID:', clienteId, 'Found:', cliente);
     this.reportTitle.set('Reporte por Cliente');
     this.reportSubtitle.set(cliente?.nombre || '');
 
     this.clientesService.getServicios(clienteId).subscribe({
       next: (data) => {
-        this.reportData.set(this.filterByDate(data));
+        console.log('Cliente report - raw data:', data.length);
+        const filtered = this.filterByDate(data);
+        this.reportData.set(filtered);
         this.reportGenerated.set(true);
         this.loading.set(false);
       },
@@ -161,7 +184,7 @@ export class ReportesSelectorComponent {
   }
 
   generateTecnicoReport(tecnicoId: number): void {
-    const tecnico = this.tecnicos().find(t => t.idTecnico === tecnicoId);
+    const tecnico = this.tecnicos().find(t => Number(t.idTecnico) === Number(tecnicoId));
     this.reportTitle.set('Reporte por Técnico');
     this.reportSubtitle.set(tecnico?.nombre || '');
 
@@ -179,7 +202,7 @@ export class ReportesSelectorComponent {
   }
 
   generateEquipoReport(equipoId: number): void {
-    const equipo = this.equipos().find(e => e.idEquipo === equipoId);
+    const equipo = this.equipos().find(e => Number(e.idEquipo) === Number(equipoId));
     this.reportTitle.set('Reporte por Equipo');
     this.reportSubtitle.set(equipo?.nombre || '');
 
@@ -196,21 +219,64 @@ export class ReportesSelectorComponent {
     });
   }
 
+  generateSucursalReport(sucursalId: number): void {
+    const sucursal = this.sucursales().find(s => Number(s.idSucursal) === Number(sucursalId));
+    this.reportTitle.set('Reporte por Sucursal');
+    this.reportSubtitle.set(sucursal?.nombre || '');
+
+    // Get services from sucursal's cliente
+    if (sucursal && sucursal.idCliente) {
+      this.clientesService.getServicios(sucursal.idCliente).subscribe({
+        next: (data) => {
+          // Filter by sucursal
+          const filteredData = data.filter(s => Number(s.sucursal?.idSucursal) === Number(sucursalId));
+          this.reportData.set(this.filterByDate(filteredData));
+          this.reportGenerated.set(true);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.notificationService.error('Error al generar reporte');
+          this.loading.set(false);
+        }
+      });
+    } else {
+      this.notificationService.error('Error: sucursal no tiene cliente asociado');
+      this.loading.set(false);
+    }
+  }
+
+
   filterByDate(data: any[]): any[] {
     const inicio = this.fechaInicio();
     const fin = this.fechaFin();
 
-    if (!inicio && !fin) return data;
+    console.log('Date filter - Inicio:', inicio, 'Fin:', fin);
 
-    return data.filter(item => {
+    // If no date filters, return all data
+    if (!inicio && !fin) {
+      console.log('No date filters, returning all data:', data.length);
+      return data;
+    }
+
+    const filtered = data.filter(item => {
       const fecha = new Date(item.fechaServicio);
-      const fechaInicioDate = inicio ? new Date(inicio) : null;
+
+      // Skip invalid dates
+      if (isNaN(fecha.getTime())) {
+        console.warn('Invalid date for service:', item);
+        return false;
+      }
+
+      const fechaInicioDate = inicio ? new Date(inicio + 'T00:00:00') : null;
       const fechaFinDate = fin ? new Date(fin + 'T23:59:59') : null;
 
       if (fechaInicioDate && fecha < fechaInicioDate) return false;
       if (fechaFinDate && fecha > fechaFinDate) return false;
       return true;
     });
+
+    console.log(`Filtered ${filtered.length} from ${data.length} services`);
+    return filtered;
   }
 
   getStatsByEstado(): { pendiente: number; completado: number; cancelado: number } {

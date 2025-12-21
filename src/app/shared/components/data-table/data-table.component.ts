@@ -16,6 +16,7 @@ export interface DataTableColumn {
   width?: string; // Specific width (e.g. '1px', '50px', 'w-1')
   maxWidth?: string; // Max width for column (e.g., '200px', '15rem')
   iconOnly?: boolean; // If true, hides the text and only shows icon
+  buttonStyle?: 'standard' | 'circle'; // Style of the button
 }
 
 export interface DataTableAction {
@@ -75,7 +76,7 @@ export interface DataTableAction {
                 <tr>
                   @for (column of columns(); track column.key) {
                     <th 
-                      [ngClass]="(column.hideOnMobile ? 'hidden md:table-cell ' : '') + (column.width || '') + ' px-2 py-1.5 text-left text-xs font-semibold text-white uppercase tracking-wider cursor-pointer hover:bg-primary-600 transition-colors select-none'"
+                      [ngClass]="(column.hideOnMobile ? 'hidden md:table-cell ' : '') + (column.width || '') + ' px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-primary-600 transition-colors select-none'"
                       (click)="column.sortable !== false ? onSort(column.key) : null"
                     >
                       <div class="flex items-center gap-2 group">
@@ -97,7 +98,7 @@ export interface DataTableAction {
                     </th>
                   }
                   @if (actions() && actions()!.length > 0) {
-                    <th class="px-2 py-1.5 text-right text-xs font-semibold text-white uppercase tracking-wider sticky right-0 bg-primary-500 w-1 whitespace-nowrap">
+                    <th class="px-4 py-3 text-right text-xs font-bold text-white uppercase tracking-wider sticky right-0 bg-primary-500 w-1 whitespace-nowrap">
                       Acciones
                     </th>
                   }
@@ -130,7 +131,7 @@ export interface DataTableAction {
                   @for (row of paginatedData(); track row) {
                     <tr class="hover:bg-primary-50/30 transition-colors group/row">
                       @for (column of columns(); track column.key) {
-                        <td [ngClass]="(column.hideOnMobile ? 'hidden md:table-cell ' : '') + (column.width || '') + ' px-2 py-1.5'" 
+                        <td [ngClass]="(column.hideOnMobile ? 'hidden md:table-cell ' : '') + (column.width || '') + ' px-4 py-3'" 
                             [style.maxWidth]="column.maxWidth || 'auto'">
                           @if (column.type === 'badge') {
                             @let rawValue = getNestedValue(row, column.key);
@@ -141,13 +142,15 @@ export interface DataTableAction {
                           } @else if (column.type === 'button') {
                             <button 
                               (click)="column.action && column.action(row)"
-                              class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-md transition-colors"
+                              [class]="column.buttonStyle === 'circle' 
+                                ? 'flex items-center justify-center w-8 h-8 text-xs font-bold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-full transition-colors'
+                                : 'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-md transition-colors'"
                             >
                                 @if (column.icon) {
                                     <span [innerHTML]="column.icon"></span>
                                   }
                                   @if (!column.iconOnly) {
-                                    {{ column.buttonText || getNestedValue(row, column.key) || 'Ver' }}
+                                    {{ column.buttonText || (column.format ? column.format(getNestedValue(row, column.key)) : getNestedValue(row, column.key)) || 'Ver' }}
                                   }
                               </button>
                           } @else {
@@ -161,7 +164,7 @@ export interface DataTableAction {
                       }
 
                       @if (actions() && actions()!.length > 0) {
-                        <td class="px-2 py-1.5 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white group-hover/row:bg-primary-50/30 transition-colors z-10 w-1">
+                        <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white group-hover/row:bg-primary-50/30 transition-colors z-10 w-1">
                           <div class="relative inline-block">
                             <button
                               #actionBtn

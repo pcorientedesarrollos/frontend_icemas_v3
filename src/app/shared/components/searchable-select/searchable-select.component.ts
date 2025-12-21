@@ -49,9 +49,9 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/f
                  No se encontraron resultados
                </li>
              }
-             @for (option of filteredOptions(); track getOptionValue(option)) {
+              @for (option of filteredOptions(); track getOptionValue(option)) {
                <li
-                 class="relative cursor-pointer select-none py-2 pl-3 pr-9 hover:bg-primary-50"
+                 class="relative cursor-pointer select-none py-2 pl-3 pr-9 hover:bg-primary-50 text-gray-900"
                  [class.bg-primary-50]="getOptionValue(option) === value()"
                  [class.text-primary-900]="getOptionValue(option) === value()"
                  (click)="selectOption(option)"
@@ -84,7 +84,15 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/f
 })
 export class SearchableSelectComponent implements ControlValueAccessor, OnChanges {
   // Config
-  @Input() options: any[] = [];
+  private _options = signal<any[]>([]);
+  @Input()
+  set options(value: any[]) {
+    this._options.set(value || []);
+  }
+  get options(): any[] {
+    return this._options();
+  }
+
   @Input() valueKey: string = 'id'; // Key to use as value (if options are objects)
   @Input() labelKey: string = 'name'; // Key or keys to display
   @Input() placeholder: string = 'Seleccionar...';
@@ -102,7 +110,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnChange
   // Computed
   filteredOptions = computed(() => {
     const search = this.searchTerm().toLowerCase();
-    const all = this.options || [];
+    const all = this._options();
     if (!search) return all;
 
     return all.filter(opt => {
@@ -114,7 +122,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnChange
   selectedOption = computed(() => {
     const val = this.value();
     if (val === null || val === undefined) return null;
-    return this.options?.find(opt => this.getOptionValue(opt) == val); // Loose equality for consistency
+    return this._options()?.find(opt => this.getOptionValue(opt) == val); // Loose equality for consistency
   });
 
   selectedLabel = computed(() => {
@@ -193,7 +201,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnChange
       if (this.labelKey.includes('+')) {
         // 'nombre + apellido' logic could go here if needed, but keeping it simple for now
       }
-      return option[this.labelKey];
+      return option[this.labelKey] || JSON.stringify(option);
     }
     return String(option);
   }

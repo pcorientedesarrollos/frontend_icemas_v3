@@ -1,7 +1,7 @@
 <div class="min-h-screen bg-slate-50 flex flex-col">
     <!-- Header Horizontal Fijo -->
     <header class="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50 shadow-sm">
-        <div class="flex items-center justify-between px-4 md:px-6 py-3">
+        <div class="flex items-center justify-between px-4 md:px-6 py-5">
             <!-- Left Side: Logo + Mobile Menu Button -->
             <div class="flex items-center gap-2 md:gap-3">
                 <!-- Mobile Menu Button (antes del logo en móvil) -->
@@ -14,7 +14,7 @@
                 </button>
 
                 <!-- Logo -->
-                <img src="/image/Logo_icemas2.png" alt="ICEMAS Logo" class="h-10 md:h-12" />
+                <img src="/image/Logo_icemas_circular.png" alt="ICEMAS Logo" class="h-16 md:h-20" />
             </div>
 
             <!-- Right Side: User Info & Logout (Desktop/Tablet) -->
@@ -36,23 +36,11 @@
         </div>
     </header>
 
-    <div class="flex flex-1 mt-[64px]">
+    <div class="flex flex-1 mt-[104px] md:mt-[120px]">
         <!-- Sidebar Desktop -->
         <aside
-            class="hidden lg:flex flex-col w-64 xl:w-72 bg-white border-r border-gray-200 z-40 fixed h-[calc(100vh-64px)] shadow-lg">
-            <!-- User Profile Section -->
-            <div class="p-4 md:p-6 flex flex-col items-center border-b border-gray-200 bg-gray-50">
-                <div
-                    class="w-16 h-16 rounded-full bg-gradient-to-br from-[#F5A623] to-[#E89317] flex items-center justify-center mb-3 shadow-md">
-                    <span class="text-white text-xl font-bold">{{ getUserInitials() }}</span>
-                </div>
-                <div class="text-center">
-                    <p class="text-sm text-gray-800 font-semibold">{{ authService.currentUser()?.name || 'Usuario' }}
-                    </p>
-                    <p class="text-xs text-gray-500 mt-1">{{ authService.currentUser()?.role ||
-                        'Usuario' }}</p>
-                </div>
-            </div>
+            class="hidden lg:flex flex-col w-64 xl:w-72 bg-white border-r border-gray-200 z-40 fixed h-[calc(100vh-104px)] md:h-[calc(100vh-120px)] shadow-lg">
+            <!-- User Profile Section Removed -->
 
             <!-- Menu -->
             <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
@@ -63,8 +51,8 @@
                     <button (click)="toggleSubmenu(item.label)"
                         class="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg transition-all duration-200 group">
                         <div class="flex items-center gap-3">
-                            <svg class="w-5 h-5 text-gray-600 group-hover:text-[#F5A623] transition-colors" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-gray-600 group-hover:text-primary-600 transition-colors"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                     [attr.d]="item.icon" />
                             </svg>
@@ -81,8 +69,8 @@
                     @if (isExpanded(item.label)) {
                     <div class="mt-1 space-y-1 pl-4">
                         @for (child of item.children; track child.path) {
-                        <a [routerLink]="child.path" routerLinkActive="bg-[#FEF5E7] text-[#F5A623]"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-all duration-200 text-sm">
+                        <a [routerLink]="child.path" routerLinkActive="bg-primary-50 text-primary-600"
+                            class="flex items-center gap-3 px-4 py-2.5 text-gray-600 hover:bg-gray-50 rounded-lg transition-all duration-200 text-sm">
                             <span class="font-medium">{{ child.label }}</span>
                         </a>
                         }
@@ -91,9 +79,9 @@
                 </div>
                 } @else {
                 <!-- Regular menu item -->
-                <a [routerLink]="item.path" routerLinkActive="bg-[#F5A623] text-white shadow-sm"
+                <a [routerLink]="item.path" routerLinkActive="bg-primary-600 text-white shadow-sm"
                     [routerLinkActiveOptions]="{exact: false}"
-                    class="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-[#FEF5E7] rounded-lg transition-all duration-200 group">
+                    class="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-primary-50 rounded-lg transition-all duration-200 group">
                     <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" [attr.d]="item.icon" />
@@ -116,19 +104,7 @@
                     </svg>
                 </button>
 
-                <!-- User Profile Section Mobile -->
-                <div class="p-6 flex flex-col items-center border-b border-gray-200 bg-gray-50">
-                    <div
-                        class="w-20 h-20 rounded-full bg-gradient-to-br from-[#F5A623] to-[#E89317] flex items-center justify-center mb-3 shadow-md">
-                        <span class="text-white text-2xl font-bold">{{ getUserInitials() }}</span>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-sm text-gray-800 font-semibold">{{ authService.currentUser()?.name || 'Usuario'
-                            }}</p>
-                        <p class="text-xs text-gray-500 mt-1">{{ authService.currentUser()?.role ||
-                            'Usuario' }}</p>
-                    </div>
-                </div>
+                <!-- User Profile Section Removed -->
 
                 <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
                     @for (item of menuItems; track item.label) {
@@ -156,7 +132,7 @@
                         <div class="mt-1 space-y-1 pl-4">
                             @for (child of item.children; track child.path) {
                             <a [routerLink]="child.path" (click)="closeSidebar()"
-                                routerLinkActive="bg-[#FEF5E7] text-[#F5A623]"
+                                routerLinkActive="bg-primary-50 text-primary-600"
                                 class="flex items-center gap-3 px-4 py-2.5 text-gray-600 hover:bg-gray-50 rounded-lg transition-all text-sm">
                                 <span class="font-medium">{{ child.label }}</span>
                             </a>
@@ -166,8 +142,9 @@
                     </div>
                     } @else {
                     <a [routerLink]="item.path" (click)="closeSidebar()"
-                        routerLinkActive="bg-[#F5A623] text-white shadow-sm" [routerLinkActiveOptions]="{exact: false}"
-                        class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-[#FEF5E7] rounded-lg transition-colors">
+                        routerLinkActive="bg-primary-600 text-white shadow-sm"
+                        [routerLinkActiveOptions]="{exact: false}"
+                        class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-primary-50 rounded-lg transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                 [attr.d]="item.icon" />
@@ -197,7 +174,8 @@
         <!-- Main Content Area -->
         <div class="flex-1 lg:ml-64 xl:ml-72 w-full">
             <!-- Dynamic Content Background -->
-            <main class="p-4 md:p-6 lg:p-8 overflow-x-hidden bg-slate-50 min-h-[calc(100vh-64px)]">
+            <main
+                class="p-4 md:p-6 lg:p-8 overflow-x-hidden bg-slate-50 min-h-[calc(100vh-104px)] md:min-h-[calc(100vh-120px)]">
                 <router-outlet />
             </main>
         </div>

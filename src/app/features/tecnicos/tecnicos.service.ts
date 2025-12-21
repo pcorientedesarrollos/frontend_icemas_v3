@@ -33,8 +33,29 @@ export class TecnicosService {
         return this.api.get<any[]>(`tecnicos/${id}/servicios`);
     }
 
-    saveFirma(id: number, firmaBase64: string): Observable<Tecnico> {
-        return this.api.post<Tecnico>(`tecnicos/${id}/firma`, { firma: firmaBase64 });
+    saveSignature(id: number, signatureBase64: string): Observable<any> {
+        return this.api.post<any>(`tecnicos/${id}/firma`, { signature: signatureBase64 });
+    }
+
+    getSignature(id: number): Observable<string> {
+        // This would need a backend endpoint to retrieve the signature as base64
+        // For now, we'll just return the firma field from getOne
+        return new Observable(observer => {
+            this.getOne(id).subscribe({
+                next: (tecnico) => {
+                    if (tecnico.firma) {
+                        // TODO: Backend should provide an endpoint to get signature as base64
+                        // For now, return empty or construct URL
+                        observer.next(''); // Placeholder
+                        observer.complete();
+                    } else {
+                        observer.next('');
+                        observer.complete();
+                    }
+                },
+                error: (err) => observer.error(err)
+            });
+        });
     }
 
     autocomplete(term: string): Observable<any[]> {

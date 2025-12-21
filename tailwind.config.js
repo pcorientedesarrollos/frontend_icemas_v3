@@ -14,17 +14,17 @@ module.exports = {
         extend: {
             colors: {
                 primary: {
-                    50: '#fff8f1',
-                    100: '#fef5e7', // Sidebar light
-                    200: '#fde6c4',
-                    300: '#fbd094',
-                    400: '#f9b158',
-                    500: '#F5A623', // Sidebar Brand Color
-                    600: '#E89317', // Sidebar Hover
-                    700: '#c2760c',
-                    800: '#9f5e0f',
-                    900: '#834d12',
-                    950: '#482705',
+                    50: '#eff6ff',
+                    100: '#dbeafe',
+                    200: '#c4dafa', // From image
+                    300: '#84b6f4', // From image
+                    400: '#60a5fa',
+                    500: '#4d82bc', // Main requested color
+                    600: '#2563eb',
+                    700: '#1d4ed8',
+                    800: '#005187', // From image
+                    900: '#1e3a8a',
+                    950: '#172554',
                 },
                 success: {
                     light: '#d1fae5',

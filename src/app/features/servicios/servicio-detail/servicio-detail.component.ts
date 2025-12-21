@@ -102,7 +102,7 @@ export class ServicioDetailComponent implements OnInit {
         descripcion: s.descripcion,
         detalleTrabajo: s.detalleTrabajo,
         firmaCliente: s.firma || undefined,
-        firmaTecnico: s.firmaTecnico || undefined,
+        firmaTecnico: s.tecnico?.firma || undefined, // Use technician's profile signature
         fotos: s.fotos?.map((f: any) => ({
           url: f.url || '',
           tipo: f.tipo || 'antes'

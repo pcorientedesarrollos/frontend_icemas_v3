@@ -47,26 +47,28 @@ export class ClienteDetailComponent implements OnInit {
 
   sucursalesColumns: DataTableColumn[] = [
     { key: 'idSucursal', label: 'ID', sortable: true },
-    { key: 'nombre', label: 'Nombre', sortable: true },
-    { key: 'direccion', label: 'Dirección', sortable: false },
-    { key: 'telefono', label: 'Teléfono', sortable: false },
-    { key: 'contacto', label: 'Contacto', sortable: false },
+    { key: 'nombre', label: 'NOMBRE', sortable: true },
+    { key: 'direccion', label: 'DIRECCIÓN', sortable: false },
+    { key: 'telefono', label: 'TELÉFONO', sortable: false },
+    { key: 'contacto', label: 'CONTACTO', sortable: false },
   ];
 
   serviciosColumns: DataTableColumn[] = [
-    { key: 'folio', label: 'Folio', sortable: true },
-    { key: 'fechaServicio', label: 'Fecha', sortable: true, format: (val) => new Date(val).toLocaleDateString() },
-    { key: 'tipoServicio.nombre', label: 'Tipo Servicio', sortable: true },
-    { key: 'tecnico.nombre', label: 'Técnico', sortable: true },
-    { key: 'estado', label: 'Estado', sortable: true }
+    { key: 'folio', label: 'FOLIO', sortable: true },
+    { key: 'fechaServicio', label: 'FECHA', sortable: true, format: (val) => new Date(val).toLocaleDateString() },
+    { key: 'sucursal.nombre', label: 'SUCURSAL', sortable: true, format: (val) => val?.toUpperCase() || '' },
+    { key: 'equipo.nombre', label: 'EQUIPO', sortable: true, format: (val) => val?.toUpperCase() || '' },
+    { key: 'tecnico.nombre', label: 'TÉCNICO', sortable: true },
+    { key: 'estado', label: 'ESTADO', sortable: true }
   ];
 
   equiposColumns: DataTableColumn[] = [
-    { key: 'nombre', label: 'Nombre', sortable: true },
-    { key: 'modelo', label: 'Modelo', sortable: true },
-    { key: 'marca.nombre', label: 'Marca', sortable: true },
-    { key: 'serie', label: 'Serie', sortable: true },
-    { key: 'estado', label: 'Estado', sortable: true, format: (val) => val === 1 ? 'Activo' : 'Inactivo' }
+    { key: 'nombre', label: 'NOMBRE', sortable: true, format: (val) => val?.toUpperCase() },
+    { key: 'modelo', label: 'MODELO', sortable: true, format: (val) => val?.toUpperCase() || '' },
+    { key: 'marca.nombre', label: 'MARCA', sortable: true, format: (val) => val?.toUpperCase() || '' },
+    { key: 'serie', label: 'SERIE', sortable: true, format: (val) => val?.toUpperCase() || '' },
+    { key: 'sucursal.nombre', label: 'SUCURSAL', sortable: true, format: (val) => val?.toUpperCase() || '' },
+    { key: 'estado', label: 'ESTADO', sortable: true, type: 'badge', format: (val) => val === 1 ? 'Activo' : 'Inactivo' }
   ];
 
   sucursalesActions: DataTableAction[] = [

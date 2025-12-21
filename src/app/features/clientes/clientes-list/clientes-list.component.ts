@@ -2,7 +2,7 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ClientesService } from '../clientes.service';
-import { CatalogTableComponent, CatalogTableColumn, CatalogTableAction } from '../../../shared/components/catalog-table/catalog-table.component';
+import { DataTableComponent, DataTableColumn, DataTableAction } from '../../../shared/components/data-table/data-table.component';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AutocompleteInputComponent } from '../../../shared/components/autocomplete-input/autocomplete-input.component';
@@ -11,7 +11,7 @@ import type { AutocompleteOption } from '../../../core/interfaces';
 @Component({
   selector: 'app-clientes-list',
   standalone: true,
-  imports: [CommonModule, CatalogTableComponent, ModalComponent, AutocompleteInputComponent],
+  imports: [CommonModule, DataTableComponent, ModalComponent, AutocompleteInputComponent],
   templateUrl: './clientes-list.component.html',
   styleUrl: './clientes-list.component.css'
 })
@@ -35,30 +35,30 @@ export class ClientesListComponent {
   sucursalesData = signal<any[]>([]);
   sucursalesLoading = signal(false);
 
-  sucursalesColumns: CatalogTableColumn[] = [
-    { key: 'idSucursal', label: 'ID', sortable: true, width: 'w-1 whitespace-nowrap' },
+  sucursalesColumns: DataTableColumn[] = [
+    { key: 'idSucursal', label: 'ID', sortable: true, width: 'w-20' },
     { key: 'nombre', label: 'Nombre', sortable: true },
     { key: 'direccion', label: 'Dirección', sortable: false },
     { key: 'telefono', label: 'Teléfono', sortable: false }
   ];
 
-  columns: CatalogTableColumn[] = [
-    { key: 'idCliente', label: 'ID', sortable: true, width: 'w-1 whitespace-nowrap' },
+  columns: DataTableColumn[] = [
+    { key: 'idCliente', label: 'ID', sortable: true, width: 'w-20' },
     { key: 'nombre', label: 'Nombre', sortable: true },
     { key: 'empresa', label: 'Empresa', sortable: true, hideOnMobile: true },
-    { key: 'telefono', label: 'Teléfono', sortable: false, width: 'whitespace-nowrap', hideOnMobile: true },
+    { key: 'telefono', label: 'Teléfono', sortable: false, width: 'w-32', hideOnMobile: true },
     {
       key: 'sucursales',
       label: 'Sucursales',
       type: 'button',
-      width: 'w-1 whitespace-nowrap',
-      iconOnly: true,
-      action: (row) => this.viewSucursales(row),
-      icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`
+      width: 'w-24',
+      buttonStyle: 'circle',
+      format: (val) => (val && val.length > 0) ? val.length.toString() : '0',
+      action: (row) => this.viewSucursales(row)
     }
   ];
 
-  actions: CatalogTableAction[] = [
+  actions: DataTableAction[] = [
     {
       label: 'Ver',
       color: 'primary',

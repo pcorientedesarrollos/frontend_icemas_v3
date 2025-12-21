@@ -17,6 +17,7 @@ export interface CatalogTableColumn {
   width?: string; // Specific width (e.g. '1px', '50px', 'w-1')
   maxWidth?: string; // Max width for column (e.g., '200px', '15rem')
   iconOnly?: boolean; // If true, hides the text and only shows icon
+  buttonStyle?: 'standard' | 'circle';
 }
 
 export interface CatalogTableAction {
@@ -147,13 +148,15 @@ export interface CatalogTableAction {
                           } @else if (column.type === 'button') {
                             <button 
                               (click)="$event.stopPropagation(); column.action && column.action(row)"
-                              class="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded transition-colors"
+                              [class]="column.buttonStyle === 'circle' 
+                                ? 'flex items-center justify-center w-8 h-8 text-xs font-bold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-full transition-colors'
+                                : 'inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded transition-colors'"
                             >
                                 @if (column.icon) {
                                   <span [innerHTML]="getSafeHtml(column.icon)"></span>
                                 }
                                 @if (!column.iconOnly) {
-                                  {{ column.buttonText || getNestedValue(row, column.key) || 'Ver' }}
+                                  {{ column.buttonText ?? (column.format ? column.format(getNestedValue(row, column.key)) : getNestedValue(row, column.key)) ?? 'Ver' }}
                                 }
                             </button>
                           } @else {
