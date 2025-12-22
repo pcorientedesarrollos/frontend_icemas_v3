@@ -2,36 +2,37 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClientesService } from '../../clientes/clientes.service';
-import { TecnicosService } from '../../tecnicos/tecnicos.service';
+
 import { EquiposService } from '../../equipos/equipos.service';
 import { DataTableComponent, DataTableColumn } from '../../../shared/components/data-table/data-table.component';
 import { NotificationService } from '../../../core/services/notification.service';
 import { PdfService } from '../../../core/services/pdf.service';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { PdfPreviewModalComponent } from '../../../shared/components/pdf-preview-modal/pdf-preview-modal.component';
+import { loadLogoAsBase64 } from '../../../core/utils/logo-loader';
 
 @Component({
   selector: 'app-reportes-selector',
   standalone: true,
-  imports: [CommonModule, FormsModule, DataTableComponent, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, DataTableComponent, SearchableSelectComponent, PdfPreviewModalComponent],
   templateUrl: './reportes-selector.component.html',
   styleUrl: './reportes-selector.component.css'
 })
 export class ReportesSelectorComponent {
   private clientesService = inject(ClientesService);
-  private tecnicosService = inject(TecnicosService);
   private equiposService = inject(EquiposService);
   private notificationService = inject(NotificationService);
   private pdfService = inject(PdfService);
 
   // Report type selection
-  selectedReportType = signal<'cliente' | 'tecnico' | 'equipo' | 'sucursal' | null>(null);
+  selectedReportType = signal<'cliente' | 'equipo' | null>(null);
 
   // Entity selection
   clientes = signal<any[]>([]);
-  tecnicos = signal<any[]>([]);
   equipos = signal<any[]>([]);
-  sucursales = signal<any[]>([]);
+  clienteSucursales = signal<any[]>([]); // Sucursales del cliente seleccionado
   selectedEntityId = signal<number | null>(null);
+  selectedSucursalId = signal<number | null>(null); // Sucursal seleccionada (opcional)
 
   // Report data
   reportData = signal<any[]>([]);
@@ -39,6 +40,14 @@ export class ReportesSelectorComponent {
   reportSubtitle = signal('');
   loading = signal(false);
   reportGenerated = signal(false);
+
+  // PDF Preview
+  showPdfPreview = signal(false);
+  pdfUrl = signal<string | null>(null);
+  pdfFileName = signal('');
+
+  // Selected cliente object (for PDF metadata)
+  selectedCliente = signal<any | null>(null);
 
   // Date filters
   fechaInicio = signal<string>('');
@@ -50,6 +59,7 @@ export class ReportesSelectorComponent {
     { key: 'fechaServicio', label: 'Fecha', sortable: true, format: (value: any) => value ? new Date(value).toLocaleDateString('es-MX') : 'N/A' },
     { key: 'tipoServicio.nombre', label: 'Tipo', sortable: false },
     { key: 'cliente.nombre', label: 'Cliente', sortable: false },
+    { key: 'sucursal.nombre', label: 'Sucursal', sortable: false },
     { key: 'equipo.nombre', label: 'Equipo', sortable: false },
     { key: 'tecnico.nombre', label: 'Técnico', sortable: false },
     {
@@ -86,29 +96,11 @@ export class ReportesSelectorComponent {
     this.clientesService.getAll().subscribe({
       next: (data) => {
         this.clientes.set(data);
-        // Load all sucursales from all clientes
-        const allSucursales: any[] = [];
-        data.forEach(cliente => {
-          this.clientesService.getSucursales(cliente.idCliente).subscribe({
-            next: (sucursales) => {
-              allSucursales.push(...sucursales);
-              // Remove duplicates by idSucursal
-              const uniqueSucursales = allSucursales.filter((s, index, self) =>
-                index === self.findIndex(t => t.idSucursal === s.idSucursal)
-              );
-              this.sucursales.set(uniqueSucursales);
-            },
-            error: () => { } // Silent fail
-          });
-        });
       },
       error: () => this.notificationService.error('Error al cargar clientes')
     });
 
-    this.tecnicosService.getAll().subscribe({
-      next: (data) => this.tecnicos.set(data),
-      error: () => this.notificationService.error('Error al cargar técnicos')
-    });
+
 
     this.equiposService.getAll().subscribe({
       next: (data) => this.equipos.set(data),
@@ -116,7 +108,7 @@ export class ReportesSelectorComponent {
     });
   }
 
-  selectReportType(type: 'cliente' | 'tecnico' | 'equipo' | 'sucursal'): void {
+  selectReportType(type: 'cliente' | 'equipo'): void {
     this.selectedReportType.set(type);
     this.selectedEntityId.set(null);
     this.reportGenerated.set(false);
@@ -125,6 +117,30 @@ export class ReportesSelectorComponent {
 
   onEntityChange(value: any): void {
     this.selectedEntityId.set(value ? Number(value) : null);
+    this.selectedSucursalId.set(null); // Reset sucursal selection
+
+    // If cliente is selected, load its sucursales
+    if (this.selectedReportType() === 'cliente' && value) {
+      this.loadClienteSucursales(Number(value));
+    } else {
+      this.clienteSucursales.set([]);
+    }
+  }
+
+  onSucursalChange(value: any): void {
+    this.selectedSucursalId.set(value ? Number(value) : null);
+  }
+
+  loadClienteSucursales(clienteId: number): void {
+    this.clientesService.getSucursales(clienteId).subscribe({
+      next: (data) => {
+        this.clienteSucursales.set(data);
+      },
+      error: () => {
+        this.notificationService.error('Error al cargar sucursales');
+        this.clienteSucursales.set([]);
+      }
+    });
   }
 
   onFechaInicioChange(value: string): void {
@@ -150,29 +166,45 @@ export class ReportesSelectorComponent {
       case 'cliente':
         this.generateClienteReport(entityId);
         break;
-      case 'tecnico':
-        this.generateTecnicoReport(entityId);
-        break;
       case 'equipo':
         this.generateEquipoReport(entityId);
-        break;
-      case 'sucursal':
-        this.generateSucursalReport(entityId);
         break;
     }
   }
 
   generateClienteReport(clienteId: number): void {
     const cliente = this.clientes().find(c => Number(c.idCliente) === Number(clienteId));
-    console.log('Generating report for cliente ID:', clienteId, 'Found:', cliente);
+    const sucursalId = this.selectedSucursalId();
+
+    // Store the selected cliente for PDF metadata
+    this.selectedCliente.set(cliente || null);
+
+    // Build title and subtitle
     this.reportTitle.set('Reporte por Cliente');
-    this.reportSubtitle.set(cliente?.nombre || '');
+    let subtitle = cliente?.nombre || '';
+
+    if (sucursalId) {
+      const sucursal = this.clienteSucursales().find(s => Number(s.idSucursal) === Number(sucursalId));
+      if (sucursal) {
+        subtitle += ` - ${sucursal.nombre}`;
+      }
+    }
+
+    this.reportSubtitle.set(subtitle);
 
     this.clientesService.getServicios(clienteId).subscribe({
       next: (data) => {
-        console.log('Cliente report - raw data:', data.length);
-        const filtered = this.filterByDate(data);
-        this.reportData.set(filtered);
+        // Filter out cancelled services
+        let filteredData = data.filter(s => s.estado !== 'Cancelado');
+
+        // Filter by sucursal if selected
+        if (sucursalId) {
+          filteredData = filteredData.filter(s => Number(s.sucursal?.idSucursal) === Number(sucursalId));
+        }
+
+        // Filter by date
+        const dateFiltered = this.filterByDate(filteredData);
+        this.reportData.set(dateFiltered);
         this.reportGenerated.set(true);
         this.loading.set(false);
       },
@@ -183,23 +215,7 @@ export class ReportesSelectorComponent {
     });
   }
 
-  generateTecnicoReport(tecnicoId: number): void {
-    const tecnico = this.tecnicos().find(t => Number(t.idTecnico) === Number(tecnicoId));
-    this.reportTitle.set('Reporte por Técnico');
-    this.reportSubtitle.set(tecnico?.nombre || '');
 
-    this.tecnicosService.getServicios(tecnicoId).subscribe({
-      next: (data) => {
-        this.reportData.set(this.filterByDate(data));
-        this.reportGenerated.set(true);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.notificationService.error('Error al generar reporte');
-        this.loading.set(false);
-      }
-    });
-  }
 
   generateEquipoReport(equipoId: number): void {
     const equipo = this.equipos().find(e => Number(e.idEquipo) === Number(equipoId));
@@ -208,7 +224,9 @@ export class ReportesSelectorComponent {
 
     this.equiposService.getServicios(equipoId).subscribe({
       next: (data) => {
-        this.reportData.set(this.filterByDate(data));
+        // Filter out cancelled services
+        const filteredData = data.filter(s => s.estado !== 'Cancelado');
+        this.reportData.set(this.filterByDate(filteredData));
         this.reportGenerated.set(true);
         this.loading.set(false);
       },
@@ -219,42 +237,15 @@ export class ReportesSelectorComponent {
     });
   }
 
-  generateSucursalReport(sucursalId: number): void {
-    const sucursal = this.sucursales().find(s => Number(s.idSucursal) === Number(sucursalId));
-    this.reportTitle.set('Reporte por Sucursal');
-    this.reportSubtitle.set(sucursal?.nombre || '');
 
-    // Get services from sucursal's cliente
-    if (sucursal && sucursal.idCliente) {
-      this.clientesService.getServicios(sucursal.idCliente).subscribe({
-        next: (data) => {
-          // Filter by sucursal
-          const filteredData = data.filter(s => Number(s.sucursal?.idSucursal) === Number(sucursalId));
-          this.reportData.set(this.filterByDate(filteredData));
-          this.reportGenerated.set(true);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.notificationService.error('Error al generar reporte');
-          this.loading.set(false);
-        }
-      });
-    } else {
-      this.notificationService.error('Error: sucursal no tiene cliente asociado');
-      this.loading.set(false);
-    }
-  }
 
 
   filterByDate(data: any[]): any[] {
     const inicio = this.fechaInicio();
     const fin = this.fechaFin();
 
-    console.log('Date filter - Inicio:', inicio, 'Fin:', fin);
-
     // If no date filters, return all data
     if (!inicio && !fin) {
-      console.log('No date filters, returning all data:', data.length);
       return data;
     }
 
@@ -263,7 +254,6 @@ export class ReportesSelectorComponent {
 
       // Skip invalid dates
       if (isNaN(fecha.getTime())) {
-        console.warn('Invalid date for service:', item);
         return false;
       }
 
@@ -275,7 +265,6 @@ export class ReportesSelectorComponent {
       return true;
     });
 
-    console.log(`Filtered ${filtered.length} from ${data.length} services`);
     return filtered;
   }
 
@@ -341,127 +330,186 @@ export class ReportesSelectorComponent {
     this.notificationService.success('Reporte exportado a Excel');
   }
 
-  exportToPdf(): void {
+  async exportToPdf(): Promise<void> {
     const data = this.reportData();
     if (data.length === 0) {
       this.notificationService.warning('No hay datos para exportar');
       return;
     }
 
-    // Create simple PDF report
-    const title = `${this.reportTitle()}: ${this.reportSubtitle()}`;
-    const fechaRango = `Del ${this.fechaInicio()} al ${this.fechaFin()}`;
-    const stats = this.getStatsByEstado();
+    // Load logo first
+    const logoBase64 = await loadLogoAsBase64();
 
-    // Generate PDF using jsPDF
+    // Generate PDF using jsPDF with ICEMAS format
     import('jspdf').then(({ jsPDF }) => {
-      const doc = new jsPDF();
+      const doc = new jsPDF({ orientation: 'landscape' }); // PDF horizontal
       const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
 
-      // Header Background (Orange)
-      doc.setFillColor(245, 166, 35); // #F5A623
-      doc.rect(0, 0, pageWidth, 20, 'F');
+      // ICEMAS Blue color
+      const icemasBlue = [30, 58, 138]; // #1e3a8a
 
-      // Header Title (White)
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(14);
-      doc.setFont('Helvetica', 'bold');
-      doc.text('ICEMAS - Reporte de Servicios', 20, 13);
+      // Add ICEMAS logo if loaded - proper aspect ratio
+      if (logoBase64) {
+        try {
+          // Logo: 45x20 pixels (wider, less tall for better proportions)
+          doc.addImage(logoBase64, 'PNG', 15, 12, 45, 20);
+        } catch (e) {
+          console.log('Error adding logo:', e);
+        }
+      }
 
-      doc.setTextColor(0, 0, 0); // Reset text color
-
-      // Report Title
+      // Company title (centered, aligned with logo height)
       doc.setFontSize(16);
-      doc.setTextColor(245, 166, 35); // #F5A623
-      doc.text(title, 20, 35);
-
-      // Date range
-      doc.setFontSize(11);
-      doc.setTextColor(100, 100, 100);
-      doc.text(fechaRango, 20, 42);
-      doc.text(`Generado: ${new Date().toLocaleDateString('es-MX')}`, 20, 48);
-
-      // Stats
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(12);
       doc.setFont('Helvetica', 'bold');
-      doc.text('Resumen:', 20, 60);
+      doc.setTextColor(icemasBlue[0], icemasBlue[1], icemasBlue[2]);
+      doc.text('ICEMAS EQUIPOS S.A. DE C.V.', pageWidth / 2, 22, { align: 'center' });
 
-      doc.setFont('Helvetica', 'normal');
+      // Blue horizontal line (below logo and title)
+      doc.setDrawColor(icemasBlue[0], icemasBlue[1], icemasBlue[2]);
+      doc.setLineWidth(1.5);
+      doc.line(15, 42, pageWidth - 15, 42);
+
+      // Report title
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.text(this.reportTitle(), pageWidth / 2, 50, { align: 'center' });
+
+      // Date
+      const today = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: '2-digit', day: '2-digit' });
       doc.setFontSize(10);
-      doc.text(`Total de servicios: ${data.length}`, 20, 68);
+      doc.text(`Fecha: ${today}`, pageWidth / 2, 57, { align: 'center' });
 
-      // Colored stats
-      doc.setTextColor(16, 185, 129); // Green
-      doc.text(`Completados: ${stats.completado}`, 20, 75);
+      // Client info
+      let y = 67;
+      const cliente = this.selectedCliente();
 
-      doc.setTextColor(245, 166, 35); // Orange (Primary)
+      doc.setFont('Helvetica', 'bold');
+      doc.text('Cliente:', 20, y);
+      doc.setFont('Helvetica', 'normal');
+      doc.text(this.reportSubtitle() || '', 45, y);
 
+      y += 6;
+      doc.setFont('Helvetica', 'bold');
+      doc.text('RFC:', 20, y);
+      doc.setFont('Helvetica', 'normal');
+      doc.text(cliente?.rfc || '', 45, y);
 
-      doc.setTextColor(234, 179, 8); // Yellow/Amber
-      doc.text(`Pendientes: ${stats.pendiente}`, 80, 75);
-
-      doc.setTextColor(239, 68, 68); // Red
-      doc.text(`Cancelados: ${stats.cancelado}`, 140, 75);
+      y += 6;
+      doc.setFont('Helvetica', 'bold');
+      doc.text('Teléfono:', 20, y);
+      doc.setFont('Helvetica', 'normal');
+      doc.text(cliente?.telefono || '', 45, y);
 
       // Table header
-      let y = 90;
-      doc.setFillColor(245, 166, 35); // #F5A623
+      y += 12;
+      const tableStartY = y;
+
+      // Header background (light gray)
+      doc.setFillColor(230, 230, 230);
       doc.rect(20, y - 5, pageWidth - 40, 8, 'F');
 
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(10);
+      // Header text - balanced distribution across full landscape width
       doc.setFont('Helvetica', 'bold');
-      doc.text('Folio', 22, y);
-      doc.text('Fecha', 45, y);
-      doc.text('Estado', 70, y);
-      doc.text('Tipo', 100, y);
-      doc.text('Equipo', 150, y);
+      doc.setFontSize(8);
+      doc.setTextColor(0, 0, 0);
+      doc.text('Fecha', 20, y);
+      doc.text('Sucursal', 48, y);
+      doc.text('Equipo', 88, y);
+      doc.text('Tipo de Servicio', 170, y);
+      doc.text('Técnico', 220, y);
+      doc.text('Estado', 260, y);
 
       // Table rows
-      doc.setTextColor(0, 0, 0);
       doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(7);
       y += 8;
 
       data.forEach((item, index) => {
-        if (y > 270) {
+        // Check if we need a new page
+        if (y > pageHeight - 30) {
           doc.addPage();
           y = 20;
-          // Re-draw header on new page? Optional, keeping simple for now
+
+          // Re-draw table header on new page
+          doc.setFillColor(230, 230, 230);
+          doc.rect(20, y - 5, pageWidth - 40, 8, 'F');
+          doc.setFont('Helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.text('Fecha', 20, y);
+          doc.text('Sucursal', 48, y);
+          doc.text('Equipo', 88, y);
+          doc.text('Tipo de Servicio', 170, y);
+          doc.text('Técnico', 220, y);
+          doc.text('Estado', 260, y);
+
+          doc.setFont('Helvetica', 'normal');
+          doc.setFontSize(7);
+          y += 8;
         }
 
         // Zebra striping
-        if (index % 2 === 1) {
-          doc.setFillColor(249, 250, 251); // Gray 50
-          doc.rect(20, y - 5, pageWidth - 40, 8, 'F');
+        if (index % 2 === 0) {
+          doc.setFillColor(248, 248, 248);
+          doc.rect(20, y - 5, pageWidth - 40, 7, 'F');
         }
 
-        doc.text(item.folio || '', 22, y);
-        doc.text(item.fechaServicio ? new Date(item.fechaServicio).toLocaleDateString('es-MX') : '', 45, y);
-        doc.text(item.estado || '', 70, y);
-        doc.text((item.tipoServicio?.nombre || '').substring(0, 20), 100, y);
-        doc.text((item.equipo?.nombre || '').substring(0, 25), 150, y);
-        y += 8;
+        // Row data
+        const fechaCorta = item.fechaServicio ? new Date(item.fechaServicio).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '';
+        doc.text(fechaCorta, 20, y);
+        doc.text((item.sucursal?.nombre || '').substring(0, 22), 48, y);
+        doc.text((item.equipo?.nombre || '').substring(0, 48), 88, y);
+        doc.text((item.tipoServicio?.nombre || '').substring(0, 28), 170, y);
+        doc.text((item.tecnico?.nombre || '').substring(0, 22), 220, y);
+
+        // Estado with color
+        const estado = item.estado || '';
+        if (estado === 'Completado') {
+          doc.setTextColor(0, 128, 0); // Green
+        } else if (estado === 'Pendiente') {
+          doc.setTextColor(200, 150, 0); // Yellow
+        }
+        doc.text(estado, 260, y);
+        doc.setTextColor(0, 0, 0); // Reset to black
+
+        y += 7;
       });
 
-      // Footer
+      // Footer on all pages
       const totalPages = doc.internal.pages.length - 1;
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
+        const footerY = pageHeight - 10;
         doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text(`Página ${i} de ${totalPages}`, pageWidth - 20, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Reporte generado el ${today}`, pageWidth / 2, footerY, { align: 'center' });
       }
 
-      // Save
-      doc.save(`${this.reportTitle()}_${this.reportSubtitle()}_${new Date().toISOString().split('T')[0]}.pdf`);
-      this.notificationService.success('Reporte exportado a PDF');
+      // Create blob for preview
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      this.pdfUrl.set(blobUrl);
+      this.pdfFileName.set(`Reporte_${this.reportSubtitle()}_${new Date().toISOString().split('T')[0]}.pdf`);
+
+      // Show preview modal
+      this.showPdfPreview.set(true);
     });
+  }
+
+  onPdfCancel(): void {
+    const url = this.pdfUrl();
+    if (url) {
+      URL.revokeObjectURL(url);
+    }
+    this.showPdfPreview.set(false);
+    this.pdfUrl.set(null);
   }
 
   clearReport(): void {
     this.selectedReportType.set(null);
     this.selectedEntityId.set(null);
+    this.selectedSucursalId.set(null);
+    this.clienteSucursales.set([]);
     this.reportData.set([]);
     this.reportGenerated.set(false);
     this.setDefaultDates();

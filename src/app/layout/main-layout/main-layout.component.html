@@ -44,7 +44,7 @@
 
             <!-- Menu -->
             <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
-                @for (item of menuItems; track item.label) {
+                @for (item of visibleMenuItems(); track item.label) {
                 @if (item.children) {
                 <!-- Parent with submenu -->
                 <div>
@@ -107,7 +107,7 @@
                 <!-- User Profile Section Removed -->
 
                 <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-                    @for (item of menuItems; track item.label) {
+                    @for (item of visibleMenuItems(); track item.label) {
                     @if (item.children) {
                     <div>
                         <button (click)="toggleSubmenu(item.label)"

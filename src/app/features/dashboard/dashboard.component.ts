@@ -59,12 +59,13 @@ export class DashboardComponent implements OnInit {
       right: 'dayGridMonth,timeGridWeek,timeGridDay'
     },
     weekends: true,
-    editable: false,
+    editable: true, // Enable drag and drop
     selectable: true,
     selectMirror: true,
     dayMaxEvents: true,
     events: [], // Will be updated
     eventClick: (clickInfo) => this.handleEventClick(clickInfo),
+    eventDrop: (info) => this.handleEventDrop(info), // Handle drag and drop
     height: 'auto'
   };
 
@@ -181,6 +182,33 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  handleEventDrop(info: any) {
+    const serviceId = parseInt(info.event.id);
+    const newDate = info.event.start;
+
+    // Format date to YYYY-MM-DD
+    const formattedDate = newDate.toISOString().split('T')[0];
+
+    // Update service date on server
+    this.serviciosService.update(serviceId, { fechaServicio: formattedDate })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          // Update local service data
+          const service = this.allServices.find(s => s.idServicio === serviceId);
+          if (service) {
+            service.fechaServicio = formattedDate;
+          }
+          console.log(`✅ Servicio ${serviceId} actualizado a ${formattedDate}`);
+        },
+        error: () => {
+          // Revert the event to its original date
+          info.revert();
+          console.error('❌ Error al actualizar fecha del servicio');
+        }
+      });
+  }
+
   // Quick Actions
   newService() {
     this.router.navigate(['/servicios/nuevo']);
@@ -195,6 +223,7 @@ export class DashboardComponent implements OnInit {
   }
 
   navigateToService(id: number) {
-    this.router.navigate(['/servicios', id]);
+    // Navigate to edit form so technician can complete service and get signature
+    this.router.navigate(['/servicios', id, 'editar']);
   }
 }

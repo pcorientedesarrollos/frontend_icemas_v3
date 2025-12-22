@@ -113,12 +113,26 @@
     <h2 class="text-lg font-semibold text-gray-900 mb-4">Equipo y Técnico</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
-        <p class="text-sm font-medium text-gray-500 mb-1">Equipo</p>
-        <p class="text-base text-gray-900">{{ servicio()?.equipo?.nombre }}</p>
-        <p class="text-sm text-gray-600">Modelo: {{ servicio()?.equipo?.modelo }}</p>
-        @if (servicio()?.equipo?.serie) {
-        <p class="text-sm text-gray-600">Serie: {{ servicio()?.equipo?.serie }}</p>
-        }
+        <div>
+          <p class="text-sm font-medium text-gray-500 mb-1">Equipo(s)</p>
+          @if (servicio()?.equiposAsignados && servicio()?.equiposAsignados?.length > 0) {
+          @for (item of servicio()?.equiposAsignados; track $index) {
+          <div class="mb-2 border-b border-gray-100 pb-2 last:border-0 last:pb-0">
+            <p class="text-base text-gray-900">{{ item.equipo?.nombre }}</p>
+            <p class="text-sm text-gray-600">Modelo: {{ item.equipo?.modelo }}</p>
+            @if (item.equipo?.serie) {
+            <p class="text-sm text-gray-600">Serie: {{ item.equipo?.serie }}</p>
+            }
+          </div>
+          }
+          } @else {
+          <p class="text-base text-gray-900">{{ servicio()?.equipo?.nombre }}</p>
+          <p class="text-sm text-gray-600">Modelo: {{ servicio()?.equipo?.modelo }}</p>
+          @if (servicio()?.equipo?.serie) {
+          <p class="text-sm text-gray-600">Serie: {{ servicio()?.equipo?.serie }}</p>
+          }
+          }
+        </div>
       </div>
       <div>
         <p class="text-sm font-medium text-gray-500 mb-1">Técnico Asignado</p>
@@ -173,5 +187,11 @@
     </div>
   </div>
   }
+  }
+
+  <!-- PDF Preview Modal -->
+  @if (showPdfPreview() && pdfUrl()) {
+  <app-pdf-preview-modal [isOpen]="showPdfPreview()" [pdfUrl]="pdfUrl()!" [fileName]="pdfFilename()"
+    (cancel)="closePdfPreview()" />
   }
 </div>

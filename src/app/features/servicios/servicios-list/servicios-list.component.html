@@ -33,7 +33,7 @@
   </div>
 
   <!-- Table Section -->
-  <div class="flex-1 min-h-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+  <div class="flex-1 min-h-[500px] bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
     <app-data-table [data]="servicios()" [columns]="columns" [actions]="actions" [loading]="loading()"
       [searchable]="false">
 
@@ -66,18 +66,20 @@
           </select>
 
           <!-- Cliente Filter -->
-          <select [ngModel]="selectedCliente()" (ngModelChange)="selectedCliente.set($event)"
-            class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer min-w-[160px]">
-            <option value="all">Todos los Clientes</option>
-            <option *ngFor="let cliente of clientes()" [value]="cliente.idCliente">{{ cliente.nombre }}</option>
-          </select>
+          <div class="min-w-[200px]">
+            <app-searchable-select [options]="clientesOptions()" valueKey="idCliente" labelKey="nombre"
+              [ngModel]="selectedCliente()" (selectionChange)="onClienteChange($event)"
+              placeholder="Todos los Clientes">
+            </app-searchable-select>
+          </div>
 
           <!-- Sucursal Filter -->
-          <select [ngModel]="selectedSucursal()" (ngModelChange)="selectedSucursal.set($event)"
-            class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer min-w-[160px]">
-            <option value="all">Todas las Sucursales</option>
-            <option *ngFor="let sucursal of sucursales()" [value]="sucursal.idSucursal">{{ sucursal.nombre }}</option>
-          </select>
+          <div class="min-w-[200px]">
+            <app-searchable-select [options]="sucursalesOptions()" valueKey="idSucursal" labelKey="nombre"
+              [ngModel]="selectedSucursal()" (selectionChange)="onSucursalChange($event)"
+              placeholder="Todas las Sucursales" [disabled]="selectedCliente() === 'all' || sucursales().length === 0">
+            </app-searchable-select>
+          </div>
 
           <!-- Status Filter -->
           <select [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)"

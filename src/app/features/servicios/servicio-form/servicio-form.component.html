@@ -63,10 +63,10 @@
           }
         </div>
 
-        <!-- Equipo -->
-        <div>
+        <!-- Equipos (Multiple Selection) -->
+        <div class="md:col-span-3">
           <div class="flex justify-between items-center mb-1">
-            <label class="block text-sm font-medium text-gray-700">Equipo <span class="text-red-500">*</span></label>
+            <label class="block text-sm font-medium text-gray-700">Equipos <span class="text-red-500">*</span></label>
             <button type="button" (click)="openEquipoModal()" [disabled]="!form.get('idSucursal')?.value"
               class="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
               <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -75,11 +75,35 @@
               Nuevo
             </button>
           </div>
-          <app-searchable-select [options]="equipos()" valueKey="idEquipo" labelKey="nombre" formControlName="idEquipo"
-            placeholder="Seleccionar equipo..." [disabled]="equipos().length === 0">
-          </app-searchable-select>
-          @if (form.get('idEquipo')?.touched && form.get('idEquipo')?.errors?.['required']) {
-          <p class="mt-1.5 text-sm text-red-500">El equipo es requerido</p>
+
+          @if (equipos().length === 0) {
+          <p class="text-sm text-gray-500 italic bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+            Selecciona primero un cliente y sucursal
+          </p>
+          } @else {
+          <div class="space-y-2 max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
+            @for (equipo of equipos(); track equipo.idEquipo) {
+            <label
+              class="flex items-start gap-3 p-3 hover:bg-white rounded-lg cursor-pointer transition-colors border border-transparent hover:border-gray-300">
+              <input type="checkbox" [checked]="selectedEquipos().includes(equipo.idEquipo)"
+                (change)="toggleEquipo(equipo.idEquipo)"
+                class="mt-0.5 w-4 h-4 text-primary-600 rounded focus:ring-primary-500 cursor-pointer">
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-gray-900 truncate">{{ equipo.nombre }}</p>
+                <p class="text-sm text-gray-600 truncate">
+                  {{ equipo.marca?.nombre || 'Sin marca' }} - {{ equipo.modelo || 'Sin modelo' }}
+                </p>
+                @if (equipo.serie) {
+                <p class="text-xs text-gray-500">Serie: {{ equipo.serie }}</p>
+                }
+              </div>
+            </label>
+            }
+          </div>
+
+          <p class="text-sm text-gray-600 mt-2">
+            <span class="font-medium text-primary-600">{{ selectedEquipos().length }}</span> equipo(s) seleccionado(s)
+          </p>
           }
         </div>
       </div>

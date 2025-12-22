@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
 import { environment } from '../../../environments/environment.development';
+import { UserRole } from '../enums/user-role.enum';
 
 export interface LoginCredentials {
     email: string;
@@ -21,7 +22,7 @@ export interface AuthResponse {
         id: number;
         name: string;
         email: string;
-        role?: string;
+        role: UserRole;
     };
 }
 
@@ -29,7 +30,7 @@ export interface User {
     id: number;
     name: string;
     email: string;
-    role?: string;
+    role: UserRole;
 }
 
 @Injectable({
@@ -105,5 +106,19 @@ export class AuthService {
                 this.logout();
             }
         });
+    }
+
+    // Role helper methods
+    hasRole(role: UserRole): boolean {
+        const user = this.currentUser();
+        return user?.role === role;
+    }
+
+    isAdmin(): boolean {
+        return this.hasRole(UserRole.ADMINISTRADOR);
+    }
+
+    isTecnico(): boolean {
+        return this.hasRole(UserRole.TECNICO);
     }
 }

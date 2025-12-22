@@ -7,11 +7,12 @@ import { ClientesService } from '../../clientes/clientes.service';
 import { DataTableComponent, DataTableColumn, DataTableAction } from '../../../shared/components/data-table/data-table.component';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { NotificationService } from '../../../core/services/notification.service';
+import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-equipos-list',
   standalone: true,
-  imports: [CommonModule, DataTableComponent, ModalComponent, FormsModule],
+  imports: [CommonModule, DataTableComponent, ModalComponent, FormsModule, SearchableSelectComponent],
   templateUrl: './equipos-list.component.html',
   styleUrl: './equipos-list.component.css'
 })
@@ -87,32 +88,29 @@ export class EquiposListComponent implements OnInit {
       error: () => { } // Silent fail
     });
 
-    // Load all sucursales for filter
-    this.clientesService.getAll('').subscribe({
-      next: (clientes) => {
-        const allSucursales: any[] = [];
-        clientes.forEach(cliente => {
-          this.clientesService.getSucursales(cliente.idCliente).subscribe({
-            next: (sucursales) => {
-              allSucursales.push(...sucursales);
-              const uniqueSucursales = allSucursales.filter((s, index, self) =>
-                index === self.findIndex(t => t.idSucursal === s.idSucursal)
-              );
-              this.sucursales.set(uniqueSucursales);
-            },
-            error: () => { } // Silent fail
-          });
+    // React to cliente selection to load its sucursales
+    effect(() => {
+      const clienteId = this.selectedCliente();
+      if (clienteId !== 'all') {
+        // Load sucursales for selected cliente
+        this.clientesService.getSucursales(Number(clienteId)).subscribe({
+          next: (data) => this.sucursales.set(data),
+          error: () => this.sucursales.set([])
         });
-      },
-      error: () => { } // Silent fail
-    });
+        // Reset sucursal selection when cliente changes
+        this.selectedSucursal.set('all');
+      } else {
+        // Clear sucursales when no cliente is selected
+        this.sucursales.set([]);
+        this.selectedSucursal.set('all');
+      }
+    }, { allowSignalWrites: true });
 
-    // React to filter changes
+    // React to filter changes (excluding selectedCliente which has its own effect)
     effect(() => {
       // Read all filter signals to track changes
       this.searchTerm();
       this.selectedStatus();
-      this.selectedCliente();
       this.selectedSucursal();
 
       // Trigger load when any filter changes
@@ -215,5 +213,27 @@ export class EquiposListComponent implements OnInit {
       if (statusCheck === 'Inactivo') return e.estado === 0;
       return false;
     }).length;
+  }
+
+  onClienteChange(value: any): void {
+    // CRITICAL FIX: Don't convert 'all' to Number (becomes NaN)
+    if (value === 'all' || value === null || value === undefined) {
+      this.selectedCliente.set('all');
+    } else {
+      this.selectedCliente.set(Number(value));
+    }
+    // The cascading effect will handle loading sucursales
+    // Manually trigger data load
+    this.loadEquipos();
+  }
+
+  onSucursalChange(value: any): void {
+    // CRITICAL FIX: Don't convert 'all' to Number (becomes NaN)
+    if (value === 'all' || value === null || value === undefined) {
+      this.selectedSucursal.set('all');
+    } else {
+      this.selectedSucursal.set(Number(value));
+    }
+    this.loadEquipos();
   }
 }

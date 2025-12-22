@@ -107,6 +107,13 @@ export interface FotoServicio {
     imagen: string;
 }
 
+export interface ServicioEquipo {
+    id: number;
+    idServicio: number;
+    idEquipo: number;
+    equipo?: Equipo;
+}
+
 export interface Servicio {
     idServicio: number;
     idTecnico: number;
@@ -129,6 +136,7 @@ export interface Servicio {
     tecnico?: Tecnico;
     tipoServicio?: TipoServicio;
     fotos?: FotoServicio[];
+    equiposAsignados?: ServicioEquipo[];
 }
 
 export interface CreateServicioDto {
@@ -136,7 +144,8 @@ export interface CreateServicioDto {
     idTipoServicio: number;
     idCliente: number;
     idSucursal: number;
-    idEquipo: number;
+    idEquipo?: number; // Optional now
+    idsEquipos?: number[]; // New field
     fechaServicio: string;
     tipo?: string;
     descripcion?: string;

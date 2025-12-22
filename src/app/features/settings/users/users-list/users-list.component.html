@@ -1,0 +1,38 @@
+<div class="p-6">
+    <app-data-table title="Gestión de Usuarios" [data]="users()" [columns]="columns" [actions]="actions"
+        [loading]="loading()" [searchable]="true">
+        <!-- Header Actions Slot -->
+        <div header-actions>
+            <button (click)="navigateToNew()"
+                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Nuevo Usuario
+            </button>
+        </div>
+    </app-data-table>
+
+    <!-- Delete Confirmation Modal -->
+    <app-modal [isOpen]="showDeleteModal()" title="Confirmar Eliminación" (close)="showDeleteModal.set(false)">
+        <div class="p-4">
+            <p class="text-gray-700 mb-4">
+                ¿Estás seguro de que deseas eliminar al usuario
+                <strong>{{ selectedUser()?.name }}</strong>?
+            </p>
+            <p class="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
+        </div>
+
+        <div modal-footer class="flex justify-end gap-3">
+            <button (click)="showDeleteModal.set(false)"
+                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                Cancelar
+            </button>
+            <button (click)="confirmDelete()"
+                class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                Eliminar
+            </button>
+        </div>
+    </app-modal>
+</div>

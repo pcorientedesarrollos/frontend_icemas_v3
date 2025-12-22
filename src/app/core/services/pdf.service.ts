@@ -15,14 +15,15 @@ export interface ServiceOrderData {
         nombre: string;
         direccion?: string;
     };
-    equipo: {
+    equipos: {
         nombre: string;
         modelo?: string;
         serie?: string;
         marca?: string;
-    };
+    }[];
     tecnico: {
         nombre: string;
+        nombreCompleto?: string;
     };
     tipoServicio: {
         nombre: string;
@@ -51,7 +52,7 @@ export class PdfService {
         danger: '#EF4444'      // Red
     };
 
-    async generateServiceOrder(data: ServiceOrderData): Promise<void> {
+    async generateServiceOrder(data: ServiceOrderData): Promise<{ blob: Blob; blobUrl: string; filename: string }> {
         const doc = new jsPDF({
             orientation: 'portrait',
             unit: 'mm',
@@ -110,9 +111,12 @@ export class PdfService {
         // ===== FOOTER =====
         this.drawFooter(doc, pageWidth, pageHeight, margin);
 
-        // Open PDF in new tab
+        // Return blob and URL for preview
         const filename = `orden_servicio_${data.folio.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-        window.open(doc.output('bloburl'), '_blank');
+        const pdfBlob = doc.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
+
+        return { blob: pdfBlob, blobUrl, filename };
     }
 
     private drawHeader(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number, logoData: string): number {
@@ -323,7 +327,7 @@ export class PdfService {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
         doc.setTextColor(77, 130, 188); // Brand Blue
-        doc.text('EQUIPO', margin, yPos);
+        doc.text('EQUIPOS', margin, yPos);
 
         yPos += 8;
         doc.setDrawColor(229, 231, 235);
@@ -334,37 +338,59 @@ export class PdfService {
         doc.setTextColor(31, 41, 55);
 
         const col1 = margin;
-        const col2 = pageWidth / 2;
+        const col2 = pageWidth / 2 + 10;
 
         yPos += 5;
-        doc.setFont('helvetica', 'bold');
-        doc.text('Equipo:', col1, yPos);
-        doc.setFont('helvetica', 'normal');
-        doc.text(data.equipo?.nombre || 'N/A', col1 + 25, yPos);
 
-        if (data.equipo?.marca) {
-            doc.setFont('helvetica', 'bold');
-            doc.text('Marca:', col2, yPos);
-            doc.setFont('helvetica', 'normal');
-            doc.text(data.equipo.marca, col2 + 25, yPos);
+        // Loop through equipments
+        if (!data.equipos || data.equipos.length === 0) {
+            doc.text('No hay equipos asignados', col1, yPos);
+            return yPos + 12;
         }
 
-        yPos += 7;
-        if (data.equipo?.modelo) {
+        for (let i = 0; i < data.equipos.length; i++) {
+            const equipo = data.equipos[i];
+
+            // Check if we need more space (basic check)
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            // Draw Equipment Block
+            // Background for better separation
+            doc.setFillColor(249, 250, 251);
+            doc.roundedRect(col1, yPos - 4, pageWidth - (margin * 2), 16, 1, 1, 'F');
+
+            // Equipment Name (Bold)
             doc.setFont('helvetica', 'bold');
-            doc.text('Modelo:', col1, yPos);
+            doc.text(`${i + 1}. ${equipo.nombre}`, col1 + 2, yPos + 1);
+
             doc.setFont('helvetica', 'normal');
-            doc.text(data.equipo.modelo, col1 + 25, yPos);
+            doc.setFontSize(9);
+
+            // Details in one or two lines
+            let detailX = col1 + 5;
+            let detailY = yPos + 6;
+
+            if (equipo.marca) {
+                doc.text(`Marca: ${equipo.marca}`, detailX, detailY);
+                detailX += 45;
+            }
+
+            if (equipo.modelo) {
+                doc.text(`Modelo: ${equipo.modelo}`, detailX, detailY);
+                detailX += 55;
+            }
+
+            if (equipo.serie) {
+                doc.text(`Serie: ${equipo.serie}`, detailX, detailY);
+            }
+
+            yPos += 18; // Move down for next item
         }
 
-        if (data.equipo?.serie) {
-            doc.setFont('helvetica', 'bold');
-            doc.text('Serie:', col2, yPos);
-            doc.setFont('helvetica', 'normal');
-            doc.text(data.equipo.serie, col2 + 25, yPos);
-        }
-
-        return yPos + 12;
+        return yPos + 5;
     }
 
     private drawWorkDetails(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number): number {

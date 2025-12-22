@@ -79,13 +79,16 @@ export class ServicioFormComponent implements OnInit {
   marcas = signal<any[]>([]);
   tiposEquipo = signal<any[]>([]);
 
+  // Multi-equipment selection
+  selectedEquipos = signal<number[]>([]);
+
   form: FormGroup = this.fb.group({
     folio: [''], // Optional for new, populated for edit
     fechaServicio: ['', Validators.required],
     estado: ['Pendiente', Validators.required],
     idCliente: ['', Validators.required],
     idSucursal: ['', Validators.required],
-    idEquipo: ['', Validators.required],
+    // idEquipo removed - now using selectedEquipos signal
     idTecnico: ['', Validators.required],
     idTipoServicio: ['', Validators.required],
     descripcion: [''],
@@ -361,12 +364,18 @@ export class ServicioFormComponent implements OnInit {
             estado: servicio.estado,
             idCliente: servicio.idCliente,
             idSucursal: servicio.idSucursal,
-            idEquipo: servicio.idEquipo,
+            // idEquipo removed - using selectedEquipos
             idTecnico: servicio.idTecnico,
             idTipoServicio: servicio.idTipoServicio,
             descripcion: servicio.descripcion || '',
             detalleTrabajo: servicio.detalleTrabajo || ''
           });
+
+          // Load selected equipos from equiposAsignados
+          if (servicio.equiposAsignados && servicio.equiposAsignados.length > 0) {
+            const equipoIds = servicio.equiposAsignados.map((ea: any) => ea.idEquipo);
+            this.selectedEquipos.set(equipoIds);
+          }
 
           // Load signature if exists
           if (servicio.firma) {
@@ -393,7 +402,8 @@ export class ServicioFormComponent implements OnInit {
 
   onClienteChange(): void {
     const idCliente = this.form.get('idCliente')?.value;
-    this.form.patchValue({ idSucursal: '', idEquipo: '' });
+    this.form.patchValue({ idSucursal: '' });
+    this.selectedEquipos.set([]); // Clear equipment selection
     this.sucursales.set([]);
     this.equipos.set([]);
 
@@ -409,7 +419,7 @@ export class ServicioFormComponent implements OnInit {
 
   onSucursalChange(): void {
     const idSucursal = this.form.get('idSucursal')?.value;
-    this.form.patchValue({ idEquipo: '' });
+    this.selectedEquipos.set([]); // Clear equipment selection
     this.equipos.set([]);
 
     if (idSucursal) {
@@ -422,8 +432,25 @@ export class ServicioFormComponent implements OnInit {
     }
   }
 
+  toggleEquipo(idEquipo: number): void {
+    const current = this.selectedEquipos();
+    if (current.includes(idEquipo)) {
+      // Deselect
+      this.selectedEquipos.set(current.filter(id => id !== idEquipo));
+    } else {
+      // Select
+      this.selectedEquipos.set([...current, idEquipo]);
+    }
+  }
+
   onSubmit(): void {
     if (this.form.invalid) return;
+
+    // Validate equipment selection
+    if (this.selectedEquipos().length === 0) {
+      this.notificationService.error('Selecciona al menos un equipo');
+      return;
+    }
 
     this.saving.set(true);
     const formValue = this.form.value;
@@ -433,7 +460,7 @@ export class ServicioFormComponent implements OnInit {
       ...formValue,
       idCliente: +formValue.idCliente,
       idSucursal: +formValue.idSucursal,
-      idEquipo: +formValue.idEquipo,
+      idsEquipos: this.selectedEquipos(), // Send equipment array
       idTecnico: +formValue.idTecnico,
       idTipoServicio: +formValue.idTipoServicio,
     };
@@ -477,12 +504,22 @@ export class ServicioFormComponent implements OnInit {
                     this.notificationService.success(
                       this.isEditMode() ? 'Servicio actualizado correctamente' : 'Servicio creado correctamente'
                     );
-                    this.router.navigate(['/servicios']);
+                    // After update, go to detail; after create, go to list
+                    if (this.isEditMode()) {
+                      this.router.navigate(['/servicios', servicio.idServicio]);
+                    } else {
+                      this.router.navigate(['/servicios']);
+                    }
                   },
                   error: () => {
                     this.notificationService.error('Servicio guardado pero error al subir archivos');
                     this.saving.set(false);
-                    this.router.navigate(['/servicios']);
+                    // Even on error, redirect to detail if editing
+                    if (this.isEditMode()) {
+                      this.router.navigate(['/servicios', servicio.idServicio]);
+                    } else {
+                      this.router.navigate(['/servicios']);
+                    }
                   }
                 });
             });
@@ -491,7 +528,12 @@ export class ServicioFormComponent implements OnInit {
             this.notificationService.success(
               this.isEditMode() ? 'Servicio actualizado correctamente' : 'Servicio creado correctamente'
             );
-            this.router.navigate(['/servicios']);
+            // After update, go to detail; after create, go to list
+            if (this.isEditMode()) {
+              this.router.navigate(['/servicios', servicio.idServicio]);
+            } else {
+              this.router.navigate(['/servicios']);
+            }
           }
         },
         error: () => {
@@ -507,15 +549,28 @@ export class ServicioFormComponent implements OnInit {
 
   onSignatureSaved(signatureBase64: string): void {
     this.signatureData.set(signatureBase64);
-    this.notificationService.success('Firma capturada correctamente');
 
-    // If editing, save signature to server
+    // Automatically mark service as Completado when client signs
+    this.form.patchValue({ estado: 'Completado' });
+    this.notificationService.success('Firma capturada - Servicio marcado como Completado');
+
+    // If editing, save signature to server and update status
     if (this.isEditMode() && this.servicioId) {
       this.serviciosService.saveSignature(this.servicioId, signatureBase64)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: () => {
-            this.notificationService.success('Firma guardada en el servidor');
+            // Also update the status on the server
+            this.serviciosService.update(this.servicioId!, { estado: 'Completado' })
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe({
+                next: () => {
+                  this.notificationService.success('Firma guardada y servicio completado');
+                },
+                error: () => {
+                  this.notificationService.error('Firma guardada pero error al actualizar estado');
+                }
+              });
           },
           error: () => {
             this.notificationService.error('Error al guardar la firma');

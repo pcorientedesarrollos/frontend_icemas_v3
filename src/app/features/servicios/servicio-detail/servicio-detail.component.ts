@@ -4,13 +4,13 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { ServiciosService } from '../servicios.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { PdfService, ServiceOrderData } from '../../../core/services/pdf.service';
-
+import { PdfPreviewModalComponent } from '../../../shared/components/pdf-preview-modal/pdf-preview-modal.component';
 import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-servicio-detail',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PdfPreviewModalComponent],
   templateUrl: './servicio-detail.component.html',
   styleUrl: './servicio-detail.component.css'
 })
@@ -26,6 +26,11 @@ export class ServicioDetailComponent implements OnInit {
   loading = signal(true);
   generatingPdf = signal(false);
   servicioId: number | null = null;
+
+  // PDF Preview Modal
+  showPdfPreview = signal(false);
+  pdfUrl = signal<string | null>(null);
+  pdfFilename = signal<string>('orden_servicio.pdf');
 
   ngOnInit(): void {
     const id = this.route.snapshot.params['id'];
@@ -63,7 +68,7 @@ export class ServicioDetailComponent implements OnInit {
   }
 
   navigateBack(): void {
-    this.location.back();
+    this.router.navigate(['/servicios']);
   }
 
   async generatePdf(): Promise<void> {
@@ -87,12 +92,19 @@ export class ServicioDetailComponent implements OnInit {
           nombre: s.sucursal.nombre,
           direccion: s.sucursal.direccion
         } : undefined,
-        equipo: {
-          nombre: s.equipo?.nombre || 'N/A',
-          modelo: s.equipo?.modelo,
-          serie: s.equipo?.serie,
-          marca: s.equipo?.marca?.nombre
-        },
+        equipos: s.equiposAsignados?.length > 0
+          ? s.equiposAsignados.map((item: any) => ({
+            nombre: item.equipo?.nombre || 'N/A',
+            modelo: item.equipo?.modelo,
+            serie: item.equipo?.serie,
+            marca: item.equipo?.marca?.nombre
+          }))
+          : [{
+            nombre: s.equipo?.nombre || 'N/A',
+            modelo: s.equipo?.modelo,
+            serie: s.equipo?.serie,
+            marca: s.equipo?.marca?.nombre
+          }],
         tecnico: {
           nombre: s.tecnico?.nombre || 'N/A'
         },
@@ -102,19 +114,27 @@ export class ServicioDetailComponent implements OnInit {
         descripcion: s.descripcion,
         detalleTrabajo: s.detalleTrabajo,
         firmaCliente: s.firma || undefined,
-        firmaTecnico: s.tecnico?.firma || undefined, // Use technician's profile signature
+        firmaTecnico: s.tecnico?.firma || undefined,
         fotos: s.fotos?.map((f: any) => ({
           url: f.url || '',
           tipo: f.tipo || 'antes'
         })) || []
       };
 
-      await this.pdfService.generateServiceOrder(pdfData);
+      const { blobUrl, filename } = await this.pdfService.generateServiceOrder(pdfData);
+      this.pdfUrl.set(blobUrl);
+      this.pdfFilename.set(filename);
+      this.showPdfPreview.set(true);
       this.notificationService.success('PDF generado correctamente');
     } catch (error) {
       this.notificationService.error('Error al generar el PDF');
     } finally {
       this.generatingPdf.set(false);
     }
+  }
+
+  closePdfPreview(): void {
+    this.showPdfPreview.set(false);
+    this.pdfUrl.set(null);
   }
 }

@@ -58,6 +58,10 @@ export const routes: Routes = [
             {
                 path: 'reportes',
                 loadChildren: () => import('./features/reportes/reportes.routes').then(m => m.REPORTES_ROUTES)
+            },
+            {
+                path: 'ajustes',
+                loadChildren: () => import('./features/settings/settings.routes').then(m => m.SETTINGS_ROUTES)
             }
         ]
     },
