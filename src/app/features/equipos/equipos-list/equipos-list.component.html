@@ -95,26 +95,3 @@
     </app-data-table>
   </div>
 </div>
-
-<!-- Delete Confirmation Modal (no servicios) -->
-<app-modal [isOpen]="showDeleteModal()" (close)="showDeleteModal.set(false)" title="Confirmar eliminación">
-  <div class="p-6">
-    <p class="text-gray-600 mb-6">¿Estás seguro que deseas eliminar el equipo <strong>{{ selectedEquipo()?.nombre
-        }}</strong>? Esta acción no se puede deshacer.</p>
-    <div class="flex justify-end gap-3">
-      <button (click)="showDeleteModal.set(false)"
-        class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-        Cancelar
-      </button>
-      <button (click)="confirmDelete()"
-        class="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
-        Eliminar
-      </button>
-    </div>
-  </div>
-</app-modal>
-
-<!-- Confirm Delete Modal (with servicios asociados) -->
-<app-equipo-delete-confirm-modal [isOpen]="showConfirmModal()" [equipoNombre]="selectedEquipo()?.nombre || ''"
-  [serviciosAsociados]="serviciosAsociados()" (confirmed)="confirmForceDelete()" (cancelled)="cancelConfirmModal()">
-</app-equipo-delete-confirm-modal>

@@ -42,65 +42,72 @@
       [searchable]="false">
 
       <!-- Integrated Header Filters -->
-      <div header-search class="w-full flex flex-col lg:flex-row gap-3 items-center">
-        <!-- Search Input -->
-        <div class="relative flex-1 w-full lg:w-auto min-w-[300px]">
-          <input type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
-            (keyup.enter)="loadServicios()" placeholder="Cliente, Folio, Equipo, No. Serie o Detalle..."
-            class="w-full pl-10 pr-4 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder-gray-400">
-          <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
-            viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+      <!-- Integrated Header Filters -->
+      <div header-search class="flex flex-col gap-3">
+        <!-- Row 1: Search & Time Filters -->
+        <div class="flex flex-col lg:flex-row gap-3">
+          <!-- Search (Occupies remaining space) -->
+          <div class="relative flex-1">
+            <div class="relative w-full">
+              <input type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
+                (keyup.enter)="loadServicios()" placeholder="Buscar por Cliente, Folio, Equipo, Serie o Detalle..."
+                class="w-full pl-10 pr-4 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder-gray-400">
+              <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Time Filters (Grouped) -->
+          <div class="flex gap-3 shrink-0">
+            <select [ngModel]="selectedYear()" (ngModelChange)="selectedYear.set($event)"
+              class="w-24 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer">
+              <option *ngFor="let year of years()" [value]="year">{{ year }}</option>
+            </select>
+
+            <select [ngModel]="selectedMonth()" (ngModelChange)="selectedMonth.set($event)"
+              class="w-40 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer">
+              <option *ngFor="let month of months" [value]="month.value">{{ month.label }}</option>
+            </select>
+          </div>
         </div>
 
-        <!-- Filters Group -->
-        <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-          <!-- Year Filter -->
-          <select [ngModel]="selectedYear()" (ngModelChange)="selectedYear.set($event)"
-            class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer">
-            <option *ngFor="let year of years()" [value]="year">{{ year }}</option>
-          </select>
-
-          <!-- Month Filter -->
-          <select [ngModel]="selectedMonth()" (ngModelChange)="selectedMonth.set($event)"
-            class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer">
-            <option *ngFor="let month of months" [value]="month.value">{{ month.label }}</option>
-          </select>
-
-          <!-- Cliente Filter -->
-          <div class="min-w-[200px]">
+        <!-- Row 2: Entity Filters & Actions -->
+        <div class="flex flex-col lg:flex-row gap-3">
+          <!-- Clients & Sucursales (Flex Grow) -->
+          <div class="flex-1 min-w-[200px]">
             <app-searchable-select [options]="clientesOptions()" valueKey="idCliente" labelKey="nombre"
               [ngModel]="selectedCliente()" (selectionChange)="onClienteChange($event)"
               placeholder="Todos los Clientes">
             </app-searchable-select>
           </div>
 
-          <!-- Sucursal Filter -->
-          <div class="min-w-[200px]">
+          <div class="flex-1 min-w-[200px]">
             <app-searchable-select [options]="sucursalesOptions()" valueKey="idSucursal" labelKey="nombre"
               [ngModel]="selectedSucursal()" (selectionChange)="onSucursalChange($event)"
               placeholder="Todas las Sucursales" [disabled]="selectedCliente() === 'all' || sucursales().length === 0">
             </app-searchable-select>
           </div>
 
-          <!-- Status Filter -->
-          <select [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)"
-            class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer">
-            <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
-          </select>
+          <!-- Status & Refresh (Fixed widths/grouped) -->
+          <div class="flex gap-3 shrink-0">
+            <select [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)"
+              class="w-40 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer">
+              <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+            </select>
 
-          <!-- Refresh Button -->
-          <button (click)="resetFilters()"
-            class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-gray-200"
-            title="Restablecer filtros">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-              stroke="currentColor" class="w-5 h-5">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-            </svg>
-          </button>
+            <button (click)="resetFilters()"
+              class="px-3 py-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-gray-200"
+              title="Restablecer filtros">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -112,20 +119,3 @@
     <!-- Active Filters Badges (Moved inside the table container, below header logic if needed, but app-data-table doesn't support slot there easily without modification. For now, putting it below table or modifying data-table might be needed. BUT user asked to avoid the border gap. By putting filters in header-search, that is achieved. The badges can be part of header-search too if we want, or just below the table header if we modify data-table. Let's keep things simple: Put badges in header-search as a second row? No, that might be too tall. Let's start with just filters in header-search.) -->
   </div>
 </div>
-
-<!-- Delete Confirmation Modal -->
-<app-modal [isOpen]="showDeleteModal()" (close)="showDeleteModal.set(false)" title="Confirmar eliminación">
-  <div class="p-6">
-    <p class="text-gray-600 mb-6">¿Está seguro que desea eliminar este servicio? Esta acción no se puede deshacer.</p>
-    <div class="flex justify-end gap-3">
-      <button (click)="showDeleteModal.set(false)"
-        class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-        Cancelar
-      </button>
-      <button (click)="confirmDelete()"
-        class="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
-        Eliminar
-      </button>
-    </div>
-  </div>
-</app-modal>

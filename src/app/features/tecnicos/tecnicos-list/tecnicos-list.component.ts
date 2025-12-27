@@ -3,14 +3,14 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TecnicosService } from '../tecnicos.service';
 import { DataTableComponent, DataTableColumn, DataTableAction } from '../../../shared/components/data-table/data-table.component';
-import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { NotificationService } from '../../../core/services/notification.service';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { AutocompleteInputComponent, AutocompleteOption } from '../../../shared/components/autocomplete-input/autocomplete-input.component';
 
 @Component({
   selector: 'app-tecnicos-list',
   standalone: true,
-  imports: [CommonModule, DataTableComponent, ModalComponent, AutocompleteInputComponent],
+  imports: [CommonModule, DataTableComponent, AutocompleteInputComponent],
   templateUrl: './tecnicos-list.component.html',
   styleUrl: './tecnicos-list.component.css',
 })
@@ -18,18 +18,16 @@ export class TecnicosListComponent {
   private tecnicosService = inject(TecnicosService);
   private router = inject(Router);
   private notificationService = inject(NotificationService);
+  private confirmationService = inject(ConfirmationService);
 
   tecnicos = signal<any[]>([]);
   loading = signal(true);
-  showDeleteModal = signal(false);
-  selectedTecnico = signal<any>(null);
 
   // Autocomplete state
   autocompleteOptions = signal<AutocompleteOption[]>([]);
   autocompleteLoading = signal(false);
 
   columns: DataTableColumn[] = [
-    { key: 'idTecnico', label: 'ID', sortable: true, width: 'w-1 whitespace-nowrap' },
     { key: 'nombre', label: 'Nombre', sortable: true },
     { key: 'email', label: 'Email', sortable: true, hideOnMobile: true },
     { key: 'telefono', label: 'Teléfono', sortable: false, width: 'whitespace-nowrap', hideOnMobile: true },
@@ -84,25 +82,27 @@ export class TecnicosListComponent {
     this.router.navigate(['/tecnicos/nuevo']);
   }
 
-  openDeleteModal(tecnico: any): void {
-    this.selectedTecnico.set(tecnico);
-    this.showDeleteModal.set(true);
-  }
-
-  confirmDelete(): void {
-    const id = this.selectedTecnico()?.idTecnico;
-    if (!id) return;
-
-    this.tecnicosService.delete(id).subscribe({
-      next: () => {
-        this.notificationService.success('Técnico eliminado correctamente');
-        this.showDeleteModal.set(false);
-        this.loadTecnicos();
-      },
-      error: (error) => {
-        this.notificationService.error('Error al eliminar técnico');
-      }
+  // Delete Modal
+  async openDeleteModal(tecnico: any) {
+    const confirmed = await this.confirmationService.confirm({
+      title: '¿Eliminar Técnico?',
+      text: `Estás a punto de eliminar al técnico "${tecnico.nombre}". Esta acción no se puede deshacer.`,
+      confirmButtonText: 'Sí, eliminar técnico',
+      confirmButtonColor: '#dc2626'
     });
+
+    if (confirmed) {
+      this.tecnicosService.delete(tecnico.idTecnico).subscribe({
+        next: () => {
+          this.notificationService.success('Técnico eliminado correctamente');
+          this.loadTecnicos();
+        },
+        error: (error) => {
+          console.error('Error deleting tecnico:', error);
+          this.notificationService.error(error.error?.message || 'Error al eliminar técnico');
+        }
+      });
+    }
   }
 
   // Autocomplete methods

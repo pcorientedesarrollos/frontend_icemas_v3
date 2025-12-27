@@ -5,8 +5,7 @@
             <!-- Left Side: Logo + Mobile Menu Button -->
             <div class="flex items-center gap-2 md:gap-3">
                 <!-- Mobile Menu Button (antes del logo en móvil) -->
-                <button (click)="toggleSidebar()"
-                    class="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg order-first">
+                <button (click)="toggleSidebar()" class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg order-first">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6h16M4 12h16M4 18h16" />
@@ -38,6 +37,7 @@
 
     <div class="flex flex-1 mt-[104px] md:mt-[120px]">
         <!-- Sidebar Desktop -->
+        @if (sidebarOpen()) {
         <aside
             class="hidden lg:flex flex-col w-64 xl:w-72 bg-white border-r border-gray-200 z-40 fixed h-[calc(100vh-104px)] md:h-[calc(100vh-120px)] shadow-lg">
             <!-- User Profile Section Removed -->
@@ -92,6 +92,7 @@
                 }
             </nav>
         </aside>
+        }
 
         <!-- Sidebar Mobile Overlay -->
         @if (sidebarOpen()) {
@@ -172,7 +173,8 @@
         }
 
         <!-- Main Content Area -->
-        <div class="flex-1 lg:ml-64 xl:ml-72 w-full">
+        <div class="flex-1 w-full transition-all duration-300" [class.lg:ml-64]="sidebarOpen()"
+            [class.xl:ml-72]="sidebarOpen()">
             <!-- Dynamic Content Background -->
             <main
                 class="p-4 md:p-6 lg:p-8 overflow-x-hidden bg-slate-50 min-h-[calc(100vh-104px)] md:min-h-[calc(100vh-120px)]">

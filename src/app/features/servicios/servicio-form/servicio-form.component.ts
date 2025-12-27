@@ -51,6 +51,7 @@ export class ServicioFormComponent implements OnInit {
   showSucursalModal = signal(false);
   showEquipoModal = signal(false);
   showMarcaModal = signal(false);
+  showEditEquipoModal = signal(false); // Modal para editar equipo existente
 
   // Quick-create form values
   newClienteNombre = signal('');
@@ -64,11 +65,21 @@ export class ServicioFormComponent implements OnInit {
   newEquipoIdTipo = signal<number | ''>('');
   newMarcaNombre = signal('');
 
+  // Edit equipo form values
+  editEquipoId = signal<number | null>(null);
+  editEquipoNombre = signal('');
+  editEquipoModelo = signal('');
+  editEquipoSerie = signal('');
+  editEquipoDescripcion = signal('');
+  editEquipoIdMarca = signal<number | ''>('');
+  editEquipoIdTipo = signal<number | ''>('');
+
   // Quick-create saving states
   savingCliente = signal(false);
   savingSucursal = signal(false);
   savingEquipo = signal(false);
   savingMarca = signal(false);
+  savingEditEquipo = signal(false);
 
   // Catalogs
   clientes = signal<any[]>([]);
@@ -441,6 +452,80 @@ export class ServicioFormComponent implements OnInit {
       // Select
       this.selectedEquipos.set([...current, idEquipo]);
     }
+  }
+
+  editEquipo(idEquipo: number): void {
+    // Buscar el equipo en la lista actual
+    const equipo = this.equipos().find(e => e.idEquipo === idEquipo);
+    if (!equipo) return;
+
+    // Cargar datos del equipo en el modal de edición
+    this.editEquipoId.set(equipo.idEquipo);
+    this.editEquipoNombre.set(equipo.nombre || '');
+    this.editEquipoModelo.set(equipo.modelo || '');
+    this.editEquipoSerie.set(equipo.serie || '');
+    this.editEquipoDescripcion.set(equipo.descripcion || '');
+    this.editEquipoIdMarca.set(equipo.idMarca || '');
+    this.editEquipoIdTipo.set(equipo.idTipo || '');
+
+    // Abrir modal
+    this.showEditEquipoModal.set(true);
+  }
+
+  closeEditEquipoModal(): void {
+    this.showEditEquipoModal.set(false);
+    this.editEquipoId.set(null);
+    this.editEquipoNombre.set('');
+    this.editEquipoModelo.set('');
+    this.editEquipoSerie.set('');
+    this.editEquipoDescripcion.set('');
+    this.editEquipoIdMarca.set('');
+    this.editEquipoIdTipo.set('');
+  }
+
+  updateEquipo(): void {
+    const id = this.editEquipoId();
+    const nombre = this.editEquipoNombre().trim();
+    const modelo = this.editEquipoModelo().trim();
+    const idMarca = this.editEquipoIdMarca();
+    const idTipo = this.editEquipoIdTipo();
+
+    if (!id || !nombre || !modelo || !idMarca || !idTipo) {
+      this.notificationService.error('Nombre, modelo, marca y tipo son requeridos');
+      return;
+    }
+
+    this.savingEditEquipo.set(true);
+    const idSucursal = +this.form.get('idSucursal')?.value;
+    const idCliente = +this.form.get('idCliente')?.value;
+
+    this.equiposService.update(id, {
+      nombre,
+      modelo,
+      serie: this.editEquipoSerie().trim() || undefined,
+      descripcion: this.editEquipoDescripcion().trim() || undefined,
+      idMarca: +idMarca,
+      idTipo: +idTipo,
+      idCliente,
+      idSucursal,
+      estado: 1
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (equipoActualizado) => {
+          // Actualizar la lista de equipos
+          this.equipos.update(list =>
+            list.map(e => e.idEquipo === id ? equipoActualizado : e)
+          );
+          this.notificationService.success(`Equipo "${nombre}" actualizado correctamente`);
+          this.closeEditEquipoModal();
+          this.savingEditEquipo.set(false);
+        },
+        error: () => {
+          this.notificationService.error('Error al actualizar el equipo');
+          this.savingEditEquipo.set(false);
+        }
+      });
   }
 
   onSubmit(): void {

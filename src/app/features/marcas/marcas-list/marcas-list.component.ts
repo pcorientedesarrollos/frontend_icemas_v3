@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MarcasService, Marca } from '../marcas.service';
 import { CatalogTableComponent, CatalogTableColumn, CatalogTableAction } from '../../../shared/components/catalog-table/catalog-table.component';
-import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { NotificationService } from '../../../core/services/notification.service';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 
 @Component({
     selector: 'app-marcas-list',
     standalone: true,
-    imports: [CommonModule, CatalogTableComponent, ModalComponent],
+    imports: [CommonModule, CatalogTableComponent],
     templateUrl: './marcas-list.component.html',
     styleUrl: './marcas-list.component.css'
 })
@@ -17,15 +17,14 @@ export class MarcasListComponent implements OnInit {
     private marcasService = inject(MarcasService);
     private router = inject(Router);
     private notificationService = inject(NotificationService);
+    private confirmationService = inject(ConfirmationService);
 
     marcas = signal<Marca[]>([]);
     loading = signal(true);
-    showDeleteModal = signal(false);
-    selectedMarca = signal<Marca | null>(null);
 
     columns: CatalogTableColumn[] = [
-        { key: 'idMarca', label: 'ID', sortable: true, width: 'w-1 whitespace-nowrap' },
-        { key: 'nombre', label: 'Nombre', sortable: true }
+        { key: 'nombre', label: 'Nombre', sortable: true },
+        { key: 'descripcion', label: 'Descripción', sortable: true }
     ];
 
     actions: CatalogTableAction[] = [
@@ -37,7 +36,7 @@ export class MarcasListComponent implements OnInit {
         {
             label: 'Eliminar',
             color: 'danger',
-            onClick: (row) => this.openDeleteModal(row)
+            onClick: (row) => this.confirmDelete(row)
         }
     ];
 
@@ -63,24 +62,23 @@ export class MarcasListComponent implements OnInit {
         this.router.navigate(['/catalogos/marcas/nuevo']);
     }
 
-    openDeleteModal(marca: Marca): void {
-        this.selectedMarca.set(marca);
-        this.showDeleteModal.set(true);
-    }
-
-    confirmDelete(): void {
-        const id = this.selectedMarca()?.idMarca;
-        if (!id) return;
-
-        this.marcasService.delete(id).subscribe({
-            next: () => {
-                this.notificationService.success('Marca eliminada correctamente');
-                this.showDeleteModal.set(false);
-                this.loadMarcas();
-            },
-            error: () => {
-                this.notificationService.error('Error al eliminar marca');
-                this.showDeleteModal.set(false);
+    confirmDelete(marca: Marca): void {
+        this.confirmationService.confirm({
+            title: '¿Eliminar marca?',
+            text: `¿Estás seguro que deseas eliminar la marca "${marca.nombre}"? Esta acción no se puede deshacer.`,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result) {
+                this.marcasService.delete(marca.idMarca).subscribe({
+                    next: () => {
+                        this.notificationService.success('Marca eliminada correctamente');
+                        this.loadMarcas();
+                    },
+                    error: () => {
+                        this.notificationService.error('Error al eliminar marca');
+                    }
+                });
             }
         });
     }

@@ -5,6 +5,7 @@ import { ClientesService } from '../clientes.service';
 import { DataTableComponent, DataTableColumn, DataTableAction } from '../../../shared/components/data-table/data-table.component';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { NotificationService } from '../../../core/services/notification.service';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { AutocompleteInputComponent } from '../../../shared/components/autocomplete-input/autocomplete-input.component';
 import type { AutocompleteOption } from '../../../core/interfaces';
 
@@ -20,11 +21,10 @@ export class ClientesListComponent {
   private router = inject(Router);
   private notificationService = inject(NotificationService);
   private location = inject(Location);
+  private confirmationService = inject(ConfirmationService);
 
   clientes = signal<any[]>([]);
   loading = signal(true);
-  showDeleteModal = signal(false);
-  selectedCliente = signal<any>(null);
 
   // Autocomplete state
   autocompleteOptions = signal<AutocompleteOption[]>([]);
@@ -37,14 +37,12 @@ export class ClientesListComponent {
   sucursalesLoading = signal(false);
 
   sucursalesColumns: DataTableColumn[] = [
-    { key: 'idSucursal', label: 'ID', sortable: true, width: 'w-20' },
     { key: 'nombre', label: 'Nombre', sortable: true },
     { key: 'direccion', label: 'Dirección', sortable: false },
     { key: 'telefono', label: 'Teléfono', sortable: false }
   ];
 
   columns: DataTableColumn[] = [
-    { key: 'idCliente', label: 'ID', sortable: true, width: 'w-20' },
     { key: 'nombre', label: 'Nombre', sortable: true },
     { key: 'empresa', label: 'Empresa', sortable: true, hideOnMobile: true },
     { key: 'telefono', label: 'Teléfono', sortable: false, width: 'w-32', hideOnMobile: true },
@@ -99,25 +97,27 @@ export class ClientesListComponent {
     this.router.navigate(['/clientes/nuevo']);
   }
 
-  openDeleteModal(cliente: any): void {
-    this.selectedCliente.set(cliente);
-    this.showDeleteModal.set(true);
-  }
-
-  confirmDelete(): void {
-    const id = this.selectedCliente()?.idCliente;
-    if (!id) return;
-
-    this.clientesService.delete(id).subscribe({
-      next: () => {
-        this.notificationService.success('Cliente eliminado correctamente');
-        this.showDeleteModal.set(false);
-        this.loadClientes();
-      },
-      error: (error) => {
-        this.notificationService.error('Error al eliminar cliente');
-      }
+  // Delete Modal
+  async openDeleteModal(cliente: any) {
+    const confirmed = await this.confirmationService.confirm({
+      title: '¿Eliminar Cliente?',
+      text: `Estás a punto de eliminar al cliente "${cliente.nombre}". Esta acción no se puede deshacer.`,
+      confirmButtonText: 'Sí, eliminar cliente',
+      confirmButtonColor: '#dc2626'
     });
+
+    if (confirmed) {
+      this.clientesService.delete(cliente.idCliente).subscribe({
+        next: () => {
+          this.notificationService.success('Cliente eliminado correctamente');
+          this.loadClientes();
+        },
+        error: (error) => {
+          console.error('Error deleting cliente:', error);
+          this.notificationService.error(error.error?.message || 'Error al eliminar cliente');
+        }
+      });
+    }
   }
 
   // Autocomplete methods

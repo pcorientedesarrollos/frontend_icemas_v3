@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
 import { Tecnico, CreateTecnicoDto } from '../../core/interfaces';
 
@@ -37,28 +38,17 @@ export class TecnicosService {
         return this.api.post<any>(`tecnicos/${id}/firma`, { signature: signatureBase64 });
     }
 
+    deleteSignature(id: number): Observable<any> {
+        return this.api.delete<any>(`tecnicos/${id}/firma`);
+    }
+
     getSignature(id: number): Observable<string> {
-        // This would need a backend endpoint to retrieve the signature as base64
-        // For now, we'll just return the firma field from getOne
-        return new Observable(observer => {
-            this.getOne(id).subscribe({
-                next: (tecnico) => {
-                    if (tecnico.firma) {
-                        // TODO: Backend should provide an endpoint to get signature as base64
-                        // For now, return empty or construct URL
-                        observer.next(''); // Placeholder
-                        observer.complete();
-                    } else {
-                        observer.next('');
-                        observer.complete();
-                    }
-                },
-                error: (err) => observer.error(err)
-            });
-        });
+        return this.api.get<{ signature: string }>(`tecnicos/${id}/firma`).pipe(
+            map(response => response.signature)
+        );
     }
 
     autocomplete(term: string): Observable<any[]> {
-        return this.api.get<any[]>('tecnicos/autocomplete', { term });
+        return this.api.get<any[]>('tecnicos/autocomplete', { term }, { skipLoading: true });
     }
 }

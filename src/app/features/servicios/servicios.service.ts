@@ -54,11 +54,11 @@ export class ServiciosService {
     }
 
     autocompleteId(term: string): Observable<any[]> {
-        return this.api.get<any[]>('servicios/autocomplete/id', { term });
+        return this.api.get<any[]>('servicios/autocomplete/id', { term }, { skipLoading: true });
     }
 
     autocompleteCliente(term: string): Observable<string[]> {
-        return this.api.get<string[]>('servicios/autocomplete/cliente', { term });
+        return this.api.get<string[]>('servicios/autocomplete/cliente', { term }, { skipLoading: true });
     }
 
     getTipos(): Observable<any[]> {
@@ -66,7 +66,7 @@ export class ServiciosService {
     }
 
     checkFolio(folio: string): Observable<{ exists: boolean }> {
-        return this.api.get<{ exists: boolean }>('servicios/check-folio', { folio });
+        return this.api.get<{ exists: boolean }>('servicios/check-folio', { folio }, { skipLoading: true });
     }
 
     uploadPhoto(servicioId: number, file: File, tipo: string): Observable<any> {

@@ -25,13 +25,3 @@
       <span>Nuevo Técnico</span>
     </button>
   </app-data-table>
-
-  <!-- Delete Confirmation Modal -->
-  <app-modal [isOpen]="showDeleteModal()" title="Confirmar Eliminación" type="danger" confirmButtonText="Eliminar"
-    (closed)="showDeleteModal.set(false)" (confirmed)="confirmDelete()" (cancelled)="showDeleteModal.set(false)">
-    <p class="text-gray-600">
-      ¿Estás seguro que deseas eliminar al técnico <strong>{{ selectedTecnico()?.nombre }}</strong>?
-      Esta acción no se puede deshacer.
-    </p>
-  </app-modal>
-</div>

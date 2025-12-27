@@ -1,6 +1,6 @@
-import { Component, inject, signal, computed, effect } from '@angular/core';
+import { Component, inject, signal, computed, effect, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ServiciosService } from '../servicios.service';
 import { ClientesService } from '../../clientes/clientes.service';
@@ -8,25 +8,26 @@ import { DataTableComponent, DataTableColumn, DataTableAction } from '../../../s
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { NotificationService } from '../../../core/services/notification.service';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 
 @Component({
   selector: 'app-servicios-list',
   standalone: true,
-  imports: [CommonModule, DataTableComponent, ModalComponent, FormsModule, SearchableSelectComponent],
+  imports: [CommonModule, DataTableComponent, FormsModule, SearchableSelectComponent],
   templateUrl: './servicios-list.component.html',
   styleUrl: './servicios-list.component.css',
 })
-export class ServiciosListComponent {
+export class ServiciosListComponent implements OnInit {
   private serviciosService = inject(ServiciosService);
   private clientesService = inject(ClientesService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private notificationService = inject(NotificationService);
   private location = inject(Location);
+  private confirmationService = inject(ConfirmationService);
 
   servicios = signal<any[]>([]);
   loading = signal(true);
-  showDeleteModal = signal(false);
-  selectedServicio = signal<any>(null);
 
   // Filters
   searchTerm = signal('');
@@ -49,8 +50,8 @@ export class ServiciosListComponent {
   ];
   statuses = ['Todos los Estados', 'Pendiente', 'Completado', 'Cancelado'];
 
+
   columns: DataTableColumn[] = [
-    { key: 'idServicio', label: 'ID', sortable: true, width: 'w-16 font-bold text-gray-900' },
     { key: 'folio', label: 'FOLIO', sortable: true, width: 'whitespace-nowrap font-medium' },
     { key: 'fechaServicio', label: 'FECHA', sortable: true, format: (value) => new Date(value).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }), width: 'whitespace-nowrap' },
     { key: 'cliente.nombre', label: 'CLIENTE', sortable: true, maxWidth: '200px', hideOnMobile: true, format: (val) => val?.toUpperCase() },
@@ -153,6 +154,13 @@ export class ServiciosListComponent {
   }
 
   ngOnInit(): void {
+    // Leer query params para aplicar filtros desde el dashboard
+    this.route.queryParams.subscribe(params => {
+      if (params['estado']) {
+        this.selectedStatus.set(params['estado']);
+      }
+    });
+
     // Initial load handled by effect or manually if preferred
   }
 
@@ -238,8 +246,28 @@ export class ServiciosListComponent {
     });
   }
 
-  refresh(): void {
-    this.loadServicios();
+
+  // Delete Modal
+  async openDeleteModal(servicio: any) {
+    const confirmed = await this.confirmationService.confirm({
+      title: '¿Eliminar Servicio?',
+      text: `Estás a punto de eliminar el servicio con folio "${servicio.folio}". Esta acción no se puede deshacer.`,
+      confirmButtonText: 'Sí, eliminar servicio',
+      confirmButtonColor: '#dc2626'
+    });
+
+    if (confirmed) {
+      this.serviciosService.delete(servicio.idServicio).subscribe({
+        next: () => {
+          this.notificationService.success('Servicio eliminado correctamente');
+          this.loadServicios();
+        },
+        error: (err) => {
+          console.error('Error deleting servicio:', err);
+          this.notificationService.error(err.error?.message || 'Error al eliminar el servicio');
+        }
+      });
+    }
   }
 
   resetFilters(): void {
@@ -264,54 +292,25 @@ export class ServiciosListComponent {
   }
 
   onClienteChange(value: any): void {
-
-    // CRITICAL FIX: Don't convert 'all' to Number (becomes NaN)
     if (value === 'all' || value === null || value === undefined) {
       this.selectedCliente.set('all');
     } else {
       this.selectedCliente.set(Number(value));
     }
-
-    // The cascading effect will handle loading sucursales
-    // Manually trigger data load
     this.loadServicios();
   }
 
   onSucursalChange(value: any): void {
-
-    // CRITICAL FIX: Don't convert 'all' to Number (becomes NaN)
     if (value === 'all' || value === null || value === undefined) {
       this.selectedSucursal.set('all');
     } else {
       this.selectedSucursal.set(Number(value));
     }
-
     this.loadServicios();
   }
 
   navigateToNew(): void {
     this.router.navigate(['/servicios/nuevo']);
-  }
-
-  openDeleteModal(servicio: any): void {
-    this.selectedServicio.set(servicio);
-    this.showDeleteModal.set(true);
-  }
-
-  confirmDelete(): void {
-    const id = this.selectedServicio()?.idServicio;
-    if (!id) return;
-
-    this.serviciosService.delete(id).subscribe({
-      next: () => {
-        this.notificationService.success('Servicio eliminado correctamente');
-        this.showDeleteModal.set(false);
-        this.loadServicios();
-      },
-      error: (error) => {
-        this.notificationService.error('Error al eliminar servicio');
-      }
-    });
   }
 
   getCountByEstado(estado: string): number {

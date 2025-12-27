@@ -23,8 +23,8 @@
     <!-- Stats Cards Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Servicios Totales -->
-        <div
-            class="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm p-6 border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
+        <div (click)="viewAllServices()"
+            class="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm p-6 border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all cursor-pointer">
             <div
                 class="absolute top-0 right-0 w-24 h-24 bg-primary-500 opacity-5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110">
             </div>
@@ -43,8 +43,8 @@
         </div>
 
         <!-- Pendientes -->
-        <div
-            class="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm p-6 border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
+        <div (click)="viewPendingServices()"
+            class="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm p-6 border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all cursor-pointer">
             <div
                 class="absolute top-0 right-0 w-24 h-24 bg-yellow-500 opacity-5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110">
             </div>
@@ -63,8 +63,8 @@
         </div>
 
         <!-- Completados -->
-        <div
-            class="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm p-6 border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
+        <div (click)="viewCompletedServices()"
+            class="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm p-6 border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all cursor-pointer">
             <div
                 class="absolute top-0 right-0 w-24 h-24 bg-green-500 opacity-5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110">
             </div>
@@ -110,7 +110,7 @@
     }
 
     <!-- Recent Activity -->
-    <div class="grid grid-cols-1 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Servicios Recientes -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 h-full">
             <div class="p-6 border-b border-gray-100">
@@ -177,6 +177,95 @@
                             <tr>
                                 <td colspan="5" class="px-4 py-8 text-center text-gray-500">
                                     No hay servicios recientes
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Servicios Pendientes -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 h-full">
+            <div class="p-6 border-b border-gray-100 bg-yellow-50">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Servicios Pendientes ({{ pendingServices() }})
+                    </h2>
+                    <button (click)="viewPendingServices()"
+                        class="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors">
+                        Ver Todos →
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th class="px-4 py-3 font-medium">Folio</th>
+                                <th class="px-4 py-3 font-medium">Cliente</th>
+                                <th class="px-4 py-3 font-medium">Fecha Programada</th>
+                                <th class="px-4 py-3 font-medium">Técnico</th>
+                                <th class="px-4 py-3 font-medium text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @for (item of pendingServicesList(); track item.idServicio) {
+                            <tr (click)="navigateToService(item.idServicio)"
+                                class="bg-white hover:bg-yellow-50/30 transition-colors group cursor-pointer">
+                                <td
+                                    class="px-4 py-3 font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
+                                    {{ item.folio }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ item.cliente?.nombre }}</td>
+                                <td class="px-4 py-3 text-gray-500 whitespace-nowrap">
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        {{ item.fechaServicio | date:'dd/MM/yyyy' }}
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-gray-600">
+                                    @if (item.tecnico?.nombre) {
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        <span class="truncate max-w-[150px]">{{ item.tecnico.nombre }}</span>
+                                    </div>
+                                    } @else {
+                                    <span class="text-gray-400 italic text-xs">Sin asignar</span>
+                                    }
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <button
+                                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-white bg-primary-600 group-hover:bg-primary-700 transition-colors">
+                                        Ver
+                                    </button>
+                                </td>
+                            </tr>
+                            } @empty {
+                            <tr>
+                                <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <p class="font-medium">¡No hay servicios pendientes!</p>
+                                        <p class="text-sm text-gray-400">Todos los servicios están completados</p>
+                                    </div>
                                 </td>
                             </tr>
                             }

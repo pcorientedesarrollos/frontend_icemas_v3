@@ -22,7 +22,7 @@ export class MainLayoutComponent {
   authService = inject(AuthService);
   private router = inject(Router);
 
-  sidebarOpen = signal(false);
+  sidebarOpen = signal(true);
   expandedMenus = signal<Set<string>>(new Set());
 
   menuItems: MenuItem[] = [

@@ -5,15 +5,14 @@ import { FormsModule } from '@angular/forms';
 import { EquiposService } from '../equipos.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { DataTableComponent, DataTableColumn, DataTableAction } from '../../../shared/components/data-table/data-table.component';
-import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { NotificationService } from '../../../core/services/notification.service';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
-import { EquipoDeleteConfirmModalComponent } from '../../../shared/components/equipo-delete-confirm-modal/equipo-delete-confirm-modal.component';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 
 @Component({
   selector: 'app-equipos-list',
   standalone: true,
-  imports: [CommonModule, DataTableComponent, ModalComponent, FormsModule, SearchableSelectComponent, EquipoDeleteConfirmModalComponent],
+  imports: [CommonModule, DataTableComponent, FormsModule, SearchableSelectComponent],
   templateUrl: './equipos-list.component.html',
   styleUrl: './equipos-list.component.css'
 })
@@ -23,16 +22,13 @@ export class EquiposListComponent implements OnInit {
   private router = inject(Router);
   private notificationService = inject(NotificationService);
   private location = inject(Location);
+  private confirmationService = inject(ConfirmationService);
 
   equipos = signal<any[]>([]);
   loading = signal(true);
+
   showDeleteModal = signal(false);
   selectedEquipo = signal<any>(null);
-
-  // New modal states
-  showConfirmModal = signal(false);
-  serviciosAsociados = signal<any[]>([]);
-  loadingServicios = signal(false);
 
   // Filters
   searchTerm = signal('');
@@ -45,13 +41,12 @@ export class EquiposListComponent implements OnInit {
   sucursales = signal<any[]>([]);
 
   columns: DataTableColumn[] = [
-    { key: 'idEquipo', label: 'ID', sortable: true, hideOnMobile: true, width: 'w-16 font-bold text-gray-900' },
+    { key: 'cliente.nombre', label: 'CLIENTE', sortable: true, maxWidth: '200px', hideOnMobile: true, format: (val) => val?.toUpperCase() },
+    { key: 'sucursal.nombre', label: 'SUCURSAL', sortable: true, maxWidth: '200px', hideOnMobile: true, format: (val) => val?.toUpperCase() || 'N/A' },
     { key: 'nombre', label: 'EQUIPO', sortable: true, format: (val) => val?.toUpperCase() },
     { key: 'modelo', label: 'MODELO', sortable: true, maxWidth: '150px', hideOnMobile: true, format: (val) => val?.toUpperCase() || '' },
     { key: 'marca.nombre', label: 'MARCA', sortable: true, maxWidth: '150px', hideOnMobile: true, format: (val) => val?.toUpperCase() || '' },
     { key: 'serie', label: 'SERIE', sortable: false, hideOnMobile: true, width: 'whitespace-nowrap', format: (val) => val?.toUpperCase() || '' },
-    { key: 'cliente.nombre', label: 'CLIENTE', sortable: true, maxWidth: '200px', hideOnMobile: true, format: (val) => val?.toUpperCase() },
-    { key: 'sucursal.nombre', label: 'SUCURSAL', sortable: true, maxWidth: '200px', hideOnMobile: true, format: (val) => val?.toUpperCase() || 'N/A' },
     { key: 'estado', label: 'ESTADO', sortable: true, type: 'badge', format: (value) => value === 1 ? 'Activo' : 'Inactivo', width: 'w-1 whitespace-nowrap' }
   ];
 
@@ -192,74 +187,36 @@ export class EquiposListComponent implements OnInit {
     this.router.navigate(['/equipos/nuevo']);
   }
 
-  openDeleteModal(equipo: any): void {
-    this.selectedEquipo.set(equipo);
-    this.loadingServicios.set(true);
-    this.showConfirmModal.set(true);
+  // Delete Modal
+  async openDeleteModal(equipo: any) {
+    // The old showDeleteModal and showConfirmModal signals are no longer used for preventing double opening here.
+    // The ConfirmationService handles its own state.
+    // if (this.showDeleteModal() || this.showConfirmModal()) return; // Prevent double opening
 
-    // Load associated servicios
-    this.equiposService.getServiciosAsociados(equipo.idEquipo).subscribe({
-      next: (response) => {
-        this.serviciosAsociados.set(response.servicios);
-        this.loadingServicios.set(false);
-
-        // If no servicios, show normal delete modal
-        if (response.count === 0) {
-          this.showConfirmModal.set(false);
-          this.showDeleteModal.set(true);
-        }
-      },
-      error: () => {
-        this.notificationService.error('Error al cargar servicios asociados');
-        this.showConfirmModal.set(false);
-        this.loadingServicios.set(false);
-      }
+    const confirmed = await this.confirmationService.confirm({
+      title: '¿Eliminar Equipo?',
+      text: `Estás a punto de eliminar el equipo "${equipo.nombre}" de la sucursal "${equipo.sucursal?.nombre}". Esta acción no se puede deshacer.`,
+      confirmButtonText: 'Sí, eliminar equipo',
+      confirmButtonColor: '#dc2626'
     });
-  }
 
-  confirmDelete(): void {
-    const id = this.selectedEquipo()?.idEquipo;
-    if (!id) return;
-
-    // Normal delete (no servicios asociados)
-    this.equiposService.delete(id).subscribe({
-      next: () => {
-        this.notificationService.success('Equipo eliminado correctamente');
-        this.showDeleteModal.set(false);
-        this.loadEquipos();
-      },
-      error: () => {
-        this.notificationService.error('Error al eliminar equipo');
-        this.showDeleteModal.set(false);
+    if (confirmed) {
+      if (equipo.idEquipo) {
+        this.equiposService.delete(equipo.idEquipo).subscribe({
+          next: () => {
+            this.notificationService.success('Equipo eliminado correctamente');
+            this.loadEquipos();
+          },
+          error: (err) => {
+            console.error('Error deleting equipo:', err);
+            this.notificationService.error(err.error?.message || 'Error al eliminar el equipo');
+          }
+        });
       }
-    });
+    }
   }
 
-  confirmForceDelete(): void {
-    const id = this.selectedEquipo()?.idEquipo;
-    if (!id) return;
 
-    // Force delete (with servicios asociados)
-    this.equiposService.delete(id, true).subscribe({
-      next: (response) => {
-        const count = response.serviciosEliminados || 0;
-        this.notificationService.success(
-          `Equipo eliminado correctamente. Se eliminaron ${count} servicio(s) asociado(s).`
-        );
-        this.showConfirmModal.set(false);
-        this.loadEquipos();
-      },
-      error: (error) => {
-        this.notificationService.error('Error al eliminar equipo: ' + (error.error?.message || error.message));
-        this.showConfirmModal.set(false);
-      }
-    });
-  }
-
-  cancelConfirmModal(): void {
-    this.showConfirmModal.set(false);
-    this.serviciosAsociados.set([]);
-  }
 
   getCountByEstado(statusCheck: string): number {
     return this.equipos().filter(e => {

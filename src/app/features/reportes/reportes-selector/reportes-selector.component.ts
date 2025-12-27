@@ -88,6 +88,14 @@ export class ReportesSelectorComponent {
     this.setDefaultDates();
   }
 
+  goBack(): void {
+    if (this.reportGenerated()) {
+      this.clearReport();
+    } else if (this.selectedReportType()) {
+      this.selectedReportType.set(null);
+    }
+  }
+
   setDefaultDates(): void {
     // Set default dates to current full year (January 1 to today)
     const today = new Date();

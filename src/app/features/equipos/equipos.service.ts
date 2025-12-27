@@ -57,6 +57,6 @@ export class EquiposService {
     }
 
     autocomplete(term: string): Observable<any[]> {
-        return this.api.get<any[]>('equipos/autocomplete/nombre', { term });
+        return this.api.get<any[]>('equipos/autocomplete/nombre', { term }, { skipLoading: true });
     }
 }

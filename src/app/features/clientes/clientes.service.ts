@@ -31,11 +31,11 @@ export class ClientesService {
     }
 
     autocomplete(term: string): Observable<AutocompleteOption[]> {
-        return this.api.get<AutocompleteOption[]>('clientes/autocomplete', { term });
+        return this.api.get<AutocompleteOption[]>('clientes/autocomplete', { term }, { skipLoading: true });
     }
 
     checkNombre(nombre: string): Observable<{ exists: boolean }> {
-        return this.api.get<{ exists: boolean }>('clientes/check-nombre', { nombre });
+        return this.api.get<{ exists: boolean }>('clientes/check-nombre', { nombre }, { skipLoading: true });
     }
 
     getSucursales(id: number): Observable<any[]> {

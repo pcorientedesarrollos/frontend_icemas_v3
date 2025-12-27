@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TiposServicioService, TipoServicio } from '../tipos-servicio.service';
 import { CatalogTableComponent, CatalogTableColumn, CatalogTableAction } from '../../../shared/components/catalog-table/catalog-table.component';
-import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { NotificationService } from '../../../core/services/notification.service';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 
 @Component({
     selector: 'app-tipos-servicio-list',
     standalone: true,
-    imports: [CommonModule, CatalogTableComponent, ModalComponent],
+    imports: [CommonModule, CatalogTableComponent],
     templateUrl: './tipos-servicio-list.component.html',
     styleUrl: './tipos-servicio-list.component.css'
 })
@@ -17,16 +17,13 @@ export class TiposServicioListComponent implements OnInit {
     private tiposService = inject(TiposServicioService);
     private router = inject(Router);
     private notificationService = inject(NotificationService);
+    private confirmationService = inject(ConfirmationService);
 
     tipos = signal<TipoServicio[]>([]);
     loading = signal(true);
-    showDeleteModal = signal(false);
-    selectedTipo = signal<TipoServicio | null>(null);
 
     columns: CatalogTableColumn[] = [
-        { key: 'idTipoServicio', label: 'ID', sortable: true, width: 'w-1 whitespace-nowrap' },
         { key: 'nombre', label: 'Nombre', sortable: true },
-
     ];
 
     actions: CatalogTableAction[] = [
@@ -38,7 +35,7 @@ export class TiposServicioListComponent implements OnInit {
         {
             label: 'Eliminar',
             color: 'danger',
-            onClick: (row) => this.openDeleteModal(row)
+            onClick: (row) => this.confirmDelete(row)
         }
     ];
 
@@ -64,24 +61,23 @@ export class TiposServicioListComponent implements OnInit {
         this.router.navigate(['/catalogos/tipos-servicio/nuevo']);
     }
 
-    openDeleteModal(tipo: TipoServicio): void {
-        this.selectedTipo.set(tipo);
-        this.showDeleteModal.set(true);
-    }
-
-    confirmDelete(): void {
-        const id = this.selectedTipo()?.idTipoServicio;
-        if (!id) return;
-
-        this.tiposService.delete(id).subscribe({
-            next: () => {
-                this.notificationService.success('Tipo de servicio eliminado correctamente');
-                this.showDeleteModal.set(false);
-                this.loadTipos();
-            },
-            error: () => {
-                this.notificationService.error('Error al eliminar tipo de servicio');
-                this.showDeleteModal.set(false);
+    confirmDelete(tipo: TipoServicio): void {
+        this.confirmationService.confirm({
+            title: '¿Eliminar tipo de servicio?',
+            text: `¿Estás seguro que deseas eliminar el tipo "${tipo.nombre}"? Esta acción no se puede deshacer.`,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result) {
+                this.tiposService.delete(tipo.idTipoServicio).subscribe({
+                    next: () => {
+                        this.notificationService.success('Tipo de servicio eliminado correctamente');
+                        this.loadTipos();
+                    },
+                    error: () => {
+                        this.notificationService.error('Error al eliminar tipo de servicio');
+                    }
+                });
             }
         });
     }

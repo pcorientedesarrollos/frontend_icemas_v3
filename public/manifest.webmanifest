@@ -1,0 +1,16 @@
+{
+    "name": "MCI Services",
+    "short_name": "MCI",
+    "theme_color": "#2563eb",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "scope": "/",
+    "start_url": "/",
+    "icons": [
+        {
+            "src": "image/Logo_icemas_circular.png",
+            "sizes": "192x192 512x512",
+            "type": "image/png"
+        }
+    ]
+}

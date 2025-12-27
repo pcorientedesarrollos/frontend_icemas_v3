@@ -29,7 +29,8 @@ export class MarcaFormComponent implements OnInit {
     marcaId: number | null = null;
 
     form: FormGroup = this.fb.group({
-        nombre: ['', Validators.required, [this.uniqueNameValidator.validate.bind(this.uniqueNameValidator)]]
+        nombre: ['', Validators.required, [this.uniqueNameValidator.validate.bind(this.uniqueNameValidator)]],
+        descripcion: ['']
     });
 
     ngOnInit(): void {
@@ -45,7 +46,8 @@ export class MarcaFormComponent implements OnInit {
         this.marcasService.getOne(id).subscribe({
             next: (marca) => {
                 this.form.patchValue({
-                    nombre: marca.nombre
+                    nombre: marca.nombre,
+                    descripcion: marca.descripcion
                 });
             },
             error: () => {

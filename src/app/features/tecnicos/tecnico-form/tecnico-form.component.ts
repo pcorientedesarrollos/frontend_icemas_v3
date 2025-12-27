@@ -26,6 +26,7 @@ export class TecnicoFormComponent implements OnInit {
     saving = signal(false);
     tecnicoId: number | null = null;
     signatureData = signal<string | null>(null);
+    showEditSignature = signal(false);
 
     form: FormGroup = this.fb.group({
         nombre: ['', Validators.required],
@@ -144,6 +145,7 @@ export class TecnicoFormComponent implements OnInit {
 
     onSignatureSaved(signatureBase64: string): void {
         this.signatureData.set(signatureBase64);
+        this.showEditSignature.set(false); // Cerrar editor
         this.notificationService.success('Firma capturada correctamente');
 
         // If editing, save signature to server immediately
@@ -161,5 +163,30 @@ export class TecnicoFormComponent implements OnInit {
 
     onSignatureCleared(): void {
         this.signatureData.set(null);
+    }
+
+    removeSignature(): void {
+        if (confirm('¿Estás seguro de eliminar la firma del técnico?')) {
+            if (this.isEditMode() && this.tecnicoId) {
+                this.tecnicosService.deleteSignature(this.tecnicoId).subscribe({
+                    next: () => {
+                        this.signatureData.set(null);
+                        this.notificationService.success('Firma eliminada correctamente');
+                        this.showEditSignature.set(false);
+                    },
+                    error: () => {
+                        this.notificationService.error('Error al eliminar la firma del servidor');
+                    }
+                });
+            } else {
+                this.signatureData.set(null);
+                this.notificationService.success('Firma eliminada');
+                this.showEditSignature.set(false);
+            }
+        }
+    }
+
+    cancelEditSignature(): void {
+        this.showEditSignature.set(false);
     }
 }

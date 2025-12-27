@@ -3,14 +3,14 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { UsersService, User } from '../users.service';
 import { DataTableComponent, DataTableColumn, DataTableAction } from '../../../../shared/components/data-table/data-table.component';
-import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { UserRole } from '../../../../core/enums/user-role.enum';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 
 @Component({
     selector: 'app-users-list',
     standalone: true,
-    imports: [CommonModule, DataTableComponent, ModalComponent],
+    imports: [CommonModule, DataTableComponent],
     templateUrl: './users-list.component.html',
     styleUrl: './users-list.component.css'
 })
@@ -18,14 +18,12 @@ export class UsersListComponent {
     private usersService = inject(UsersService);
     private router = inject(Router);
     private notificationService = inject(NotificationService);
+    private confirmationService = inject(ConfirmationService);
 
     users = signal<User[]>([]);
     loading = signal(true);
-    showDeleteModal = signal(false);
-    selectedUser = signal<User | null>(null);
 
     columns: DataTableColumn[] = [
-        { key: 'id', label: 'ID', sortable: true, width: 'w-20' },
         { key: 'name', label: 'Nombre', sortable: true },
         { key: 'email', label: 'Email', sortable: true },
         {
@@ -54,7 +52,7 @@ export class UsersListComponent {
         {
             label: 'Eliminar',
             color: 'danger',
-            onClick: (row) => this.openDeleteModal(row)
+            onClick: (row) => this.confirmDelete(row)
         }
     ];
 
@@ -80,23 +78,23 @@ export class UsersListComponent {
         this.router.navigate(['/ajustes/usuarios/nuevo']);
     }
 
-    openDeleteModal(user: User): void {
-        this.selectedUser.set(user);
-        this.showDeleteModal.set(true);
-    }
-
-    confirmDelete(): void {
-        const user = this.selectedUser();
-        if (!user) return;
-
-        this.usersService.delete(user.id).subscribe({
-            next: () => {
-                this.notificationService.success('Usuario eliminado correctamente');
-                this.showDeleteModal.set(false);
-                this.loadUsers();
-            },
-            error: (error) => {
-                this.notificationService.error('Error al eliminar usuario');
+    confirmDelete(user: User): void {
+        this.confirmationService.confirm({
+            title: '¿Eliminar usuario?',
+            text: `¿Estás seguro que deseas eliminar el usuario "${user.name}"? Esta acción no se puede deshacer.`,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result) {
+                this.usersService.delete(user.id).subscribe({
+                    next: () => {
+                        this.notificationService.success('Usuario eliminado correctamente');
+                        this.loadUsers();
+                    },
+                    error: (error) => {
+                        this.notificationService.error('Error al eliminar usuario');
+                    }
+                });
             }
         });
     }

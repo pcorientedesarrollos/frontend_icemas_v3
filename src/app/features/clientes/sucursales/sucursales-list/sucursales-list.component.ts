@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { SucursalesService } from '../sucursales.service';
 import { DataTableComponent, DataTableColumn, DataTableAction } from '../../../../shared/components/data-table/data-table.component';
-import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 
 @Component({
     selector: 'app-sucursales-list',
     standalone: true,
-    imports: [CommonModule, DataTableComponent, ModalComponent],
+    imports: [CommonModule, DataTableComponent],
     templateUrl: './sucursales-list.component.html',
     styleUrl: './sucursales-list.component.css',
 })
@@ -18,15 +18,13 @@ export class SucursalesListComponent {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private notificationService = inject(NotificationService);
+    private confirmationService = inject(ConfirmationService);
 
     sucursales = signal<any[]>([]);
     loading = signal(true);
-    showDeleteModal = signal(false);
-    selectedSucursal = signal<any>(null);
     clienteId = signal<number | null>(null);
 
     columns: DataTableColumn[] = [
-        { key: 'idSucursal', label: 'ID', sortable: true },
         { key: 'nombre', label: 'Nombre', sortable: true },
         { key: 'direccion', label: 'Dirección', sortable: false, hideOnMobile: true },
         { key: 'telefono', label: 'Teléfono', sortable: false, hideOnMobile: true },
@@ -47,7 +45,7 @@ export class SucursalesListComponent {
         {
             label: 'Eliminar',
             color: 'danger',
-            onClick: (row) => this.openDeleteModal(row)
+            onClick: (row) => this.confirmDelete(row)
         }
     ];
 
@@ -90,23 +88,23 @@ export class SucursalesListComponent {
         }
     }
 
-    openDeleteModal(sucursal: any): void {
-        this.selectedSucursal.set(sucursal);
-        this.showDeleteModal.set(true);
-    }
-
-    confirmDelete(): void {
-        const id = this.selectedSucursal()?.idSucursal;
-        if (!id) return;
-
-        this.sucursalesService.delete(id).subscribe({
-            next: () => {
-                this.notificationService.success('Sucursal eliminada correctamente');
-                this.showDeleteModal.set(false);
-                this.loadSucursales();
-            },
-            error: (error) => {
-                this.notificationService.error('Error al eliminar sucursal');
+    confirmDelete(sucursal: any): void {
+        this.confirmationService.confirm({
+            title: '¿Eliminar sucursal?',
+            text: `¿Estás seguro que deseas eliminar la sucursal "${sucursal.nombre}"? Esta acción no se puede deshacer.`,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result) {
+                this.sucursalesService.delete(sucursal.idSucursal).subscribe({
+                    next: () => {
+                        this.notificationService.success('Sucursal eliminada correctamente');
+                        this.loadSucursales();
+                    },
+                    error: (error) => {
+                        this.notificationService.error('Error al eliminar sucursal');
+                    }
+                });
             }
         });
     }

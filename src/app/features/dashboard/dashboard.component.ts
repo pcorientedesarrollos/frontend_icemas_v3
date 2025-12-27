@@ -37,6 +37,7 @@ export class DashboardComponent implements OnInit {
 
   // Recent activity
   recentServices = signal<any[]>([]);
+  pendingServicesList = signal<any[]>([]); // Lista de servicios pendientes
   activeTechsList = signal<any[]>([]);
 
   // Calendar Events
@@ -120,6 +121,13 @@ export class DashboardComponent implements OnInit {
       new Date(b.created_at || b.idServicio).getTime() - new Date(a.created_at || a.idServicio).getTime()
     );
     this.recentServices.set(sorted.slice(0, 5));
+
+    // Pending Services - ordenados por fecha del servicio (más cercanos primero)
+    const pendingList = services
+      .filter(s => s.estado === 'Pendiente')
+      .sort((a, b) => new Date(a.fechaServicio).getTime() - new Date(b.fechaServicio).getTime())
+      .slice(0, 5); // Mostrar solo los primeros 5
+    this.pendingServicesList.set(pendingList);
 
     // Calendar Events - Filter today onwards
     const today = new Date();
@@ -214,20 +222,32 @@ export class DashboardComponent implements OnInit {
   }
 
   // Quick Actions
-  newService() {
+  newService(): void {
     this.router.navigate(['/servicios/nuevo']);
   }
 
-  newClient() {
+  newClient(): void {
     this.router.navigate(['/clientes/nuevo']);
   }
 
-  viewCalendar() {
+  viewCalendar(): void {
     this.showCalendar.update(v => !v);
   }
 
-  navigateToService(id: number) {
-    // Navigate to edit form so technician can complete service and get signature
-    this.router.navigate(['/servicios', id, 'editar']);
+  navigateToService(id: number): void {
+    this.router.navigate(['/servicios', id]);
+  }
+
+  // Métodos para navegar a servicios filtrados
+  viewAllServices(): void {
+    this.router.navigate(['/servicios']);
+  }
+
+  viewPendingServices(): void {
+    this.router.navigate(['/servicios'], { queryParams: { estado: 'Pendiente' } });
+  }
+
+  viewCompletedServices(): void {
+    this.router.navigate(['/servicios'], { queryParams: { estado: 'Completado' } });
   }
 }

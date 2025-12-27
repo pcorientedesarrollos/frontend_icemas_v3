@@ -98,8 +98,8 @@ export class ClienteFormComponent implements OnInit {
     const clienteData = {
       nombre: formValue.nombre,
       empresa: formValue.empresa,
-      telefono: formValue.telefono,
-      email: formValue.email
+      telefono: formValue.telefono || undefined,
+      email: formValue.email || undefined
     };
     const sucursalesData = formValue.sucursales || [];
 
