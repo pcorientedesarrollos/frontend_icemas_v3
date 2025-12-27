@@ -31,7 +31,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
                 }
             }
 
-            console.error('HTTP Error:', errorMessage);
+            if (error.status === 400) {
+                console.warn('Validation Error:', errorMessage);
+            } else {
+                console.error('HTTP Error:', errorMessage);
+            }
             return throwError(() => new Error(errorMessage));
         })
     );

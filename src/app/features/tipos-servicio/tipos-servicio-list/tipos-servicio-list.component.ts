@@ -74,8 +74,8 @@ export class TiposServicioListComponent implements OnInit {
                         this.notificationService.success('Tipo de servicio eliminado correctamente');
                         this.loadTipos();
                     },
-                    error: () => {
-                        this.notificationService.error('Error al eliminar tipo de servicio');
+                    error: (err) => {
+                        this.notificationService.error(err.message || 'Error al eliminar tipo de servicio');
                     }
                 });
             }

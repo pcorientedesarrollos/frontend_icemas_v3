@@ -48,6 +48,7 @@ export class ReportesSelectorComponent {
 
   // Selected cliente object (for PDF metadata)
   selectedCliente = signal<any | null>(null);
+  selectedEquipo = signal<any | null>(null);
 
   // Equipment report filters
   selectedClienteForEquipo = signal<number | null>(null);
@@ -298,6 +299,7 @@ export class ReportesSelectorComponent {
 
   generateEquipoReport(equipoId: number): void {
     const equipo = this.equipos().find(e => Number(e.idEquipo) === Number(equipoId));
+    this.selectedEquipo.set(equipo || null);
     this.reportTitle.set('Reporte por Equipo');
     this.reportSubtitle.set(equipo?.nombre || '');
 
@@ -460,25 +462,77 @@ export class ReportesSelectorComponent {
       doc.text(`Fecha: ${today}`, pageWidth / 2, 57, { align: 'center' });
 
       // Client info
+      // Client/Entity info specific to report type
       let y = 67;
-      const cliente = this.selectedCliente();
 
-      doc.setFont('Helvetica', 'bold');
-      doc.text('Cliente:', 20, y);
-      doc.setFont('Helvetica', 'normal');
-      doc.text(this.reportSubtitle() || '', 45, y);
+      if (this.selectedReportType() === 'equipo') {
+        const equipo = this.selectedEquipo();
 
-      y += 6;
-      doc.setFont('Helvetica', 'bold');
-      doc.text('RFC:', 20, y);
-      doc.setFont('Helvetica', 'normal');
-      doc.text(cliente?.rfc || '', 45, y);
+        // Try to find Client name context if not in equipo object
+        let clienteName = equipo?.cliente?.nombre;
+        if (!clienteName && this.selectedClienteForEquipo()) {
+          const c = this.clientes().find(c => Number(c.idCliente) === Number(this.selectedClienteForEquipo()));
+          clienteName = c?.nombre;
+        }
 
-      y += 6;
-      doc.setFont('Helvetica', 'bold');
-      doc.text('Teléfono:', 20, y);
-      doc.setFont('Helvetica', 'normal');
-      doc.text(cliente?.telefono || '', 45, y);
+        // Try to find Sucursal name context
+        let sucursalName = equipo?.sucursal?.nombre;
+        if (!sucursalName && this.selectedSucursalForEquipo()) {
+          // Need to look in loaded sucursales for the client
+          const s = this.equipoSucursales().find(s => Number(s.idSucursal) === Number(this.selectedSucursalForEquipo()));
+          sucursalName = s?.nombre;
+        } else if (!sucursalName && equipo?.sucursalId && this.equipoSucursales().length > 0) {
+          const s = this.equipoSucursales().find(s => Number(s.idSucursal) === Number(equipo.sucursalId));
+          sucursalName = s?.nombre;
+        }
+
+        doc.setFont('Helvetica', 'bold');
+        doc.text('Equipo:', 20, y);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(equipo?.nombre || '', 45, y);
+
+        y += 6;
+        doc.setFont('Helvetica', 'bold');
+        doc.text('Cliente:', 20, y);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(clienteName || 'N/A', 45, y);
+
+        y += 6;
+        doc.setFont('Helvetica', 'bold');
+        doc.text('Sucursal:', 20, y);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(sucursalName || 'N/A', 45, y);
+
+        // Add Serie if available
+        if (equipo?.serie || equipo?.numeroSerie) {
+          y += 6;
+          doc.setFont('Helvetica', 'bold');
+          doc.text('Serie:', 20, y);
+          doc.setFont('Helvetica', 'normal');
+          doc.text(equipo.serie || equipo.numeroSerie || '', 45, y);
+        }
+
+      } else {
+        // Standard Client Report
+        const cliente = this.selectedCliente();
+
+        doc.setFont('Helvetica', 'bold');
+        doc.text('Cliente:', 20, y);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(this.reportSubtitle() || '', 45, y); // Title already includes sucursal if selected
+
+        y += 6;
+        doc.setFont('Helvetica', 'bold');
+        doc.text('RFC:', 20, y);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(cliente?.rfc || '', 45, y);
+
+        y += 6;
+        doc.setFont('Helvetica', 'bold');
+        doc.text('Teléfono:', 20, y);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(cliente?.telefono || '', 45, y);
+      }
 
       // Table header
       y += 12;

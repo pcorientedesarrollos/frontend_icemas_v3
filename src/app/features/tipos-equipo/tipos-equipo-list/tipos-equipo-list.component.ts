@@ -75,8 +75,8 @@ export class TiposEquipoListComponent implements OnInit {
                         this.notificationService.success('Tipo de equipo eliminado correctamente');
                         this.loadTipos();
                     },
-                    error: () => {
-                        this.notificationService.error('Error al eliminar tipo de equipo');
+                    error: (err) => {
+                        this.notificationService.error(err.message || 'Error al eliminar tipo de equipo');
                     }
                 });
             }

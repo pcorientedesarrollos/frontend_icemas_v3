@@ -91,8 +91,8 @@ export class UsersListComponent {
                         this.notificationService.success('Usuario eliminado correctamente');
                         this.loadUsers();
                     },
-                    error: (error) => {
-                        this.notificationService.error('Error al eliminar usuario');
+                    error: (err) => {
+                        this.notificationService.error(err.message || 'Error al eliminar usuario');
                     }
                 });
             }

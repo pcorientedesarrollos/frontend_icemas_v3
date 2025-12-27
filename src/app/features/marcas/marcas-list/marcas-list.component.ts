@@ -75,8 +75,8 @@ export class MarcasListComponent implements OnInit {
                         this.notificationService.success('Marca eliminada correctamente');
                         this.loadMarcas();
                     },
-                    error: () => {
-                        this.notificationService.error('Error al eliminar marca');
+                    error: (err) => {
+                        this.notificationService.error(err.message || 'Error al eliminar marca');
                     }
                 });
             }

@@ -40,6 +40,6 @@ export class TiposServicioService {
     }
 
     checkNombre(nombre: string): Observable<{ exists: boolean }> {
-        return this.api.get<{ exists: boolean }>('servicios/tipos/check-nombre', { nombre });
+        return this.api.get<{ exists: boolean }>('servicios/tipos/check-nombre', { nombre }, { skipLoading: true });
     }
 }

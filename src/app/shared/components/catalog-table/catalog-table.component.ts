@@ -1,4 +1,4 @@
-import { Component, input, output, signal, computed, ElementRef, ViewChild, inject } from '@angular/core';
+import { Component, input, output, signal, computed, ElementRef, ViewChild, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -331,6 +331,17 @@ export class CatalogTableComponent {
   menuPosition = signal<{ x: number, y: number }>({ x: 0, y: 0 });
 
   private sanitizer = inject(DomSanitizer);
+
+  constructor() {
+    // Auto-adjust page if data filtering reduces total pages below current page
+    effect(() => {
+      const total = this.totalPages();
+      const current = this.currentPage();
+      if (total > 0 && current > total) {
+        this.currentPage.set(1);
+      }
+    });
+  }
 
   Math = Math;
 

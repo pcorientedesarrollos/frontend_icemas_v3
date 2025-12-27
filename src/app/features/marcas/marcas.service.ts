@@ -39,6 +39,6 @@ export class MarcasService {
     }
 
     checkNombre(nombre: string): Observable<{ exists: boolean }> {
-        return this.api.get<{ exists: boolean }>('equipos/marcas/check-nombre', { nombre });
+        return this.api.get<{ exists: boolean }>('equipos/marcas/check-nombre', { nombre }, { skipLoading: true });
     }
 }

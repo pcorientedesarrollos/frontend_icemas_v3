@@ -1,4 +1,4 @@
-import { Component, input, output, signal, computed, ElementRef, ViewChild } from '@angular/core';
+import { Component, input, output, signal, computed, ElementRef, ViewChild, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -323,6 +323,17 @@ export class DataTableComponent {
   currentPage = signal(1);
   activeMenuRow = signal<any | null>(null);
   menuPosition = signal<{ x: number, y: number }>({ x: 0, y: 0 });
+
+  constructor() {
+    // Auto-adjust page if data filtering reduces total pages below current page
+    effect(() => {
+      const total = this.totalPages();
+      const current = this.currentPage();
+      if (total > 0 && current > total) {
+        this.currentPage.set(1);
+      }
+    });
+  }
 
   Math = Math;
 
