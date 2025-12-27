@@ -45,7 +45,22 @@ export class ClientesListComponent {
   columns: DataTableColumn[] = [
     { key: 'nombre', label: 'Nombre', sortable: true },
     { key: 'empresa', label: 'Empresa', sortable: true, hideOnMobile: true },
-    { key: 'telefono', label: 'Teléfono', sortable: false, width: 'w-32', hideOnMobile: true },
+    {
+      key: 'telefono',
+      label: 'Teléfono',
+      sortable: false,
+      width: 'w-36',
+      hideOnMobile: true,
+      format: (val) => {
+        if (!val) return '<span class="text-gray-400 italic text-xs">Sin registro</span>';
+        const str = String(val);
+        const clean = str.replace(/\D/g, '');
+        if (clean.length === 10) {
+          return `<span class="font-mono">(${clean.slice(0, 3)}) ${clean.slice(3, 6)}-${clean.slice(6)}</span>`;
+        }
+        return str;
+      }
+    },
     {
       key: 'sucursales',
       label: 'Sucursales',

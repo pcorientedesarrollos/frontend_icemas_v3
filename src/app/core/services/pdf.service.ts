@@ -407,45 +407,59 @@ export class PdfService {
         doc.setFontSize(10);
         doc.setTextColor(31, 41, 55);
 
-        // Description
+        const col1 = margin;
+        // Two columns calculation: (Total Width - Left Margin - Right Margin - Gutter) / 2
+        // Gutter = 10mm
+        const gutter = 10;
+        const colWidth = (pageWidth - (margin * 2) - gutter) / 2;
+        const col2 = margin + colWidth + gutter;
+
+        yPos += 5;
+        const startY = yPos;
+
+        let descHeight = 0;
+        let workHeight = 0;
+
+        // Description (Left Column)
         if (data.descripcion) {
-            yPos += 5;
             doc.setFont('helvetica', 'bold');
-            doc.text('Descripción del Problema:', margin, yPos);
-            yPos += 6;
+            doc.text('Descripción del Problema:', col1, yPos);
+
             doc.setFont('helvetica', 'normal');
-            const descLines = doc.splitTextToSize(data.descripcion, pageWidth - margin * 2);
-            doc.text(descLines, margin, yPos);
-            yPos += descLines.length * 5 + 5;
+            const descLines = doc.splitTextToSize(data.descripcion, colWidth);
+            doc.text(descLines, col1, yPos + 6);
+            descHeight = 6 + (descLines.length * 5);
+        } else {
+            // Placeholder if empty to keep alignment if needed, or just 0
         }
 
-        // Work performed
+        // Work performed (Right Column)
         if (data.detalleTrabajo) {
             doc.setFont('helvetica', 'bold');
-            doc.text('Trabajo Realizado:', margin, yPos);
-            yPos += 6;
+            doc.text('Trabajo Realizado:', col2, yPos);
+
             doc.setFont('helvetica', 'normal');
-            const workLines = doc.splitTextToSize(data.detalleTrabajo, pageWidth - margin * 2);
-            doc.text(workLines, margin, yPos);
-            yPos += workLines.length * 5;
+            const workLines = doc.splitTextToSize(data.detalleTrabajo, colWidth);
+            doc.text(workLines, col2, yPos + 6);
+            workHeight = 6 + (workLines.length * 5);
         }
 
-        return yPos + 12;
+        return startY + Math.max(descHeight, workHeight) + 12;
     }
 
     private drawSignature(doc: jsPDF, data: ServiceOrderData, margin: number, yPos: number, pageWidth: number, pageHeight: number): number {
         // Check if we need a new page
-        // Need about 40mm for signatures
-        if (yPos + 40 > pageHeight - 15) {
+        // Need about 70mm for signatures
+        if (yPos + 70 > pageHeight - 15) {
             doc.addPage();
             yPos = 20;
         }
 
         const col1 = margin;
-        // Adjust second column start to be at the center plus some padding or simply half page
-        const col2 = pageWidth / 2 + 10;
-        const sigWidth = 60;
-        const sigHeight = 25;
+        // Adjust second column start
+        const col2 = pageWidth / 2 + 5;
+        const sigWidth = 85;  // Increased to max fit
+        const sigHeight = 50; // Increased height
 
         // --- TECHNICIAN SIGNATURE (Left) ---
         doc.setFont('helvetica', 'bold');

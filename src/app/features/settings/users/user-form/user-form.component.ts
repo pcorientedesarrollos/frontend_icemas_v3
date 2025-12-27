@@ -23,6 +23,7 @@ export class UserFormComponent implements OnInit {
 
     isEditMode = signal(false);
     saving = signal(false);
+    showPassword = signal(false);
     userId: number | null = null;
 
     // Expose UserRole enum to template
@@ -103,5 +104,9 @@ export class UserFormComponent implements OnInit {
 
     onCancel(): void {
         this.location.back();
+    }
+
+    togglePasswordVisibility(): void {
+        this.showPassword.update(value => !value);
     }
 }

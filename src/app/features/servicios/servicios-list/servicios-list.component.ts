@@ -53,7 +53,7 @@ export class ServiciosListComponent implements OnInit {
 
   columns: DataTableColumn[] = [
     { key: 'folio', label: 'FOLIO', sortable: true, width: 'whitespace-nowrap font-medium' },
-    { key: 'fechaServicio', label: 'FECHA', sortable: true, format: (value) => new Date(value).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }), width: 'whitespace-nowrap' },
+    { key: 'fechaServicio', label: 'FECHA', sortable: true, format: (value) => new Date(value).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }), width: 'whitespace-nowrap' },
     { key: 'cliente.nombre', label: 'CLIENTE', sortable: true, maxWidth: '200px', hideOnMobile: true, format: (val) => val?.toUpperCase() },
     { key: 'sucursal.nombre', label: 'SUCURSAL', sortable: true, maxWidth: '200px', hideOnMobile: true, format: (val) => val?.toUpperCase() },
     { key: 'equiposNames', label: 'EQUIPOS', sortable: true, maxWidth: '250px', hideOnMobile: true, format: (val) => val?.toUpperCase() },

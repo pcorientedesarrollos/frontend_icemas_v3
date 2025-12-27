@@ -66,7 +66,18 @@ export class ReportesSelectorComponent {
     { key: 'tipoServicio.nombre', label: 'Tipo', sortable: false },
     { key: 'cliente.nombre', label: 'Cliente', sortable: false },
     { key: 'sucursal.nombre', label: 'Sucursal', sortable: false },
-    { key: 'equipo.nombre', label: 'Equipo', sortable: false },
+    { key: 'sucursal.nombre', label: 'Sucursal', sortable: false },
+    {
+      key: 'equipo.nombre',
+      label: 'Equipo',
+      sortable: false,
+      format: (val: any, row: any) => {
+        if (row.equiposAsignados && row.equiposAsignados.length > 0) {
+          return row.equiposAsignados.map((e: any) => e.equipo?.nombre || 'Desconocido').join(', ');
+        }
+        return val || 'N/A';
+      }
+    },
     { key: 'tecnico.nombre', label: 'Técnico', sortable: false },
     {
       key: 'estado',

@@ -2,7 +2,9 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ServiciosService } from '../servicios.service';
+import { ClientesService } from '../../clientes/clientes.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { FormsModule } from '@angular/forms';
 import { PdfService, ServiceOrderData } from '../../../core/services/pdf.service';
 import { PdfPreviewModalComponent } from '../../../shared/components/pdf-preview-modal/pdf-preview-modal.component';
 import { Location } from '@angular/common';
@@ -10,7 +12,7 @@ import { Location } from '@angular/common';
 @Component({
   selector: 'app-servicio-detail',
   standalone: true,
-  imports: [CommonModule, PdfPreviewModalComponent],
+  imports: [CommonModule, FormsModule, PdfPreviewModalComponent],
   templateUrl: './servicio-detail.component.html',
   styleUrl: './servicio-detail.component.css'
 })
@@ -21,6 +23,7 @@ export class ServicioDetailComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private pdfService = inject(PdfService);
   private location = inject(Location);
+  private clientesService = inject(ClientesService);
 
   servicio = signal<any>(null);
   loading = signal(true);
@@ -144,7 +147,8 @@ export class ServicioDetailComponent implements OnInit {
 
     // Validar que el cliente tenga email
     if (!s.cliente?.email) {
-      this.notificationService.error('El cliente no tiene un email registrado');
+      this.emailInput.set('');
+      this.showEmailModal.set(true);
       return;
     }
 
@@ -163,6 +167,56 @@ export class ServicioDetailComponent implements OnInit {
         const message = error.error?.message || 'Error al enviar el PDF';
         this.notificationService.error(message);
         this.generatingPdf.set(false);
+      }
+    });
+  }
+
+  // Email Modal Logic
+  showEmailModal = signal(false);
+  emailInput = signal('');
+  updatingEmail = signal(false);
+
+  closeEmailModal(): void {
+    this.showEmailModal.set(false);
+    this.emailInput.set('');
+  }
+
+  submitEmail(): void {
+    const email = this.emailInput().trim();
+    if (!email) {
+      this.notificationService.warning('Ingresa un correo electrónico');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      this.notificationService.warning('Ingresa un correo válido');
+      return;
+    }
+
+    const s = this.servicio();
+    if (!s || !s.cliente) return;
+
+    this.updatingEmail.set(true);
+
+    this.clientesService.update(s.cliente.idCliente, { email }).subscribe({
+      next: (updatedCliente) => {
+        this.notificationService.success('Correo actualizado correctamente');
+
+        // Update local state
+        const updatedServicio = { ...s, cliente: { ...s.cliente, email: updatedCliente.email } };
+        this.servicio.set(updatedServicio);
+
+        this.closeEmailModal();
+        this.updatingEmail.set(false);
+
+        // Retry sending PDF
+        this.sendPdfByEmail();
+      },
+      error: () => {
+        this.notificationService.error('Error al actualizar el correo del cliente');
+        this.updatingEmail.set(false);
       }
     });
   }
