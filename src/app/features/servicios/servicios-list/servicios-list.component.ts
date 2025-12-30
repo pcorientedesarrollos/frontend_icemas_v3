@@ -313,6 +313,20 @@ export class ServiciosListComponent implements OnInit {
     this.router.navigate(['/servicios/nuevo']);
   }
 
+  exportToExcel(): void {
+    this.serviciosService.exportData().subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'servicios_full_data.xlsx';
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => this.notificationService.error('Error al exportar datos')
+    });
+  }
+
   getCountByEstado(estado: string): number {
     return this.servicios().filter(s =>
       s.estado?.toLowerCase().trim() === estado.toLowerCase().trim()

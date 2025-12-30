@@ -1,13 +1,16 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { CreateServicioDto, Servicio } from '../../core/interfaces';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ServiciosService {
     private api = inject(ApiService);
+    private http = inject(HttpClient);
 
     getAll(filters?: any): Observable<Servicio[]> {
         return this.api.get<Servicio[]>('servicios', filters);
@@ -86,5 +89,9 @@ export class ServiciosService {
 
     sendPdf(servicioId: number): Observable<{ message: string; email: string }> {
         return this.api.post<{ message: string; email: string }>(`servicios/${servicioId}/send-pdf`, {});
+    }
+
+    exportData(): Observable<Blob> {
+        return this.http.get(`${environment.apiUrl}/servicios/export`, { responseType: 'blob' });
     }
 }

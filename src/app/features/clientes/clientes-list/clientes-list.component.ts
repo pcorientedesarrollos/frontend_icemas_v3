@@ -8,6 +8,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { AutocompleteInputComponent } from '../../../shared/components/autocomplete-input/autocomplete-input.component';
 import type { AutocompleteOption } from '../../../core/interfaces';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-clientes-list',
@@ -22,6 +23,7 @@ export class ClientesListComponent {
   private notificationService = inject(NotificationService);
   private location = inject(Location);
   private confirmationService = inject(ConfirmationService);
+  public authService = inject(AuthService);
 
   clientes = signal<any[]>([]);
   loading = signal(true);
@@ -110,6 +112,20 @@ export class ClientesListComponent {
 
   navigateToNew(): void {
     this.router.navigate(['/clientes/nuevo']);
+  }
+
+  exportToExcel(): void {
+    this.clientesService.exportData().subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'clientes_full_data.xlsx';
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => this.notificationService.error('Error al exportar datos')
+    });
   }
 
   // Delete Modal

@@ -1,13 +1,16 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { Cliente, CreateClienteDto, AutocompleteOption } from '../../core/interfaces';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ClientesService {
     private api = inject(ApiService);
+    private http = inject(HttpClient);
 
     getAll(search?: string): Observable<Cliente[]> {
         const params = search ? { search } : {};
@@ -52,6 +55,10 @@ export class ClientesService {
 
     getEquipos(id: number): Observable<any[]> {
         return this.api.get<any[]>(`clientes/${id}/equipos`);
+    }
+
+    exportData(): Observable<Blob> {
+        return this.http.get(`${environment.apiUrl}/clientes/export`, { responseType: 'blob' });
     }
 }
 
