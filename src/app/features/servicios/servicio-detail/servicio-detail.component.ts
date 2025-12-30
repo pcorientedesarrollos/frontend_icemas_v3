@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { PdfService, ServiceOrderData } from '../../../core/services/pdf.service';
 import { PdfPreviewModalComponent } from '../../../shared/components/pdf-preview-modal/pdf-preview-modal.component';
 import { Location } from '@angular/common';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-servicio-detail',
@@ -116,10 +117,10 @@ export class ServicioDetailComponent implements OnInit {
         },
         descripcion: s.descripcion,
         detalleTrabajo: s.detalleTrabajo,
-        firmaCliente: s.firma || undefined,
-        firmaTecnico: s.tecnico?.firma || undefined,
+        firmaCliente: this.getImageUrl(s.firma, 'firma'),
+        firmaTecnico: this.getImageUrl(s.tecnico?.firma, 'tecnico_perfil') || this.getImageUrl(s.firmaTecnico, 'firma_tecnico'), // Prefer profile? Or service? Map correctly.
         fotos: s.fotos?.map((f: any) => ({
-          url: f.url || '',
+          url: this.getImageUrl(f.url, 'foto') || '',
           tipo: f.tipo || 'antes'
         })) || []
       };
@@ -219,5 +220,20 @@ export class ServicioDetailComponent implements OnInit {
         this.updatingEmail.set(false);
       }
     });
+  }
+
+  getImageUrl(fileNameOrUrl: string | undefined | null, type: 'firma' | 'firma_tecnico' | 'foto' | 'tecnico_perfil'): string | undefined {
+    if (!fileNameOrUrl) return undefined;
+    if (fileNameOrUrl.startsWith('data:') || fileNameOrUrl.startsWith('http')) return fileNameOrUrl;
+
+    const baseUrl = environment.apiUrl.replace('/api', '');
+
+    switch (type) {
+      case 'firma': return `${baseUrl}/uploads/firmas/${fileNameOrUrl}`;
+      case 'firma_tecnico': return `${baseUrl}/uploads/firmas/${fileNameOrUrl}`;
+      case 'tecnico_perfil': return `${baseUrl}/uploads/firmas_tecnicos/${fileNameOrUrl}`;
+      case 'foto': return `${baseUrl}/uploads/fotos_servicio/${fileNameOrUrl}`;
+    }
+    return fileNameOrUrl;
   }
 }
