@@ -105,10 +105,10 @@ export class DashboardComponent implements OnInit {
     this.allServices = services;
 
     // Stats
-    const pending = services.filter(s => s.estado === 'Pendiente').length;
-    const completed = services.filter(s => s.estado === 'Completado').length;
-    const cancelled = services.filter(s => s.estado === 'Cancelado').length;
-    const incomplete = services.filter(s => s.estado === 'Incompleto').length;
+    const pending = services.filter(s => s.estado?.toLowerCase().trim() === 'pendiente').length;
+    const completed = services.filter(s => s.estado?.toLowerCase().trim() === 'completado').length;
+    const cancelled = services.filter(s => s.estado?.toLowerCase().trim() === 'cancelado').length;
+    const incomplete = services.filter(s => s.estado?.toLowerCase().trim() === 'incompleto').length;
 
     this.totalServices.set(services.length);
     this.pendingServices.set(pending);
@@ -124,7 +124,7 @@ export class DashboardComponent implements OnInit {
 
     // Pending Services - ordenados por fecha del servicio (más cercanos primero)
     const pendingList = services
-      .filter(s => s.estado === 'Pendiente')
+      .filter(s => s.estado?.toLowerCase().trim() === 'pendiente')
       .sort((a, b) => new Date(a.fechaServicio).getTime() - new Date(b.fechaServicio).getTime())
       .slice(0, 5); // Mostrar solo los primeros 5
     this.pendingServicesList.set(pendingList);
@@ -139,11 +139,13 @@ export class DashboardComponent implements OnInit {
         return serviceDate >= today;
       })
       .map(s => {
+        const estado = s.estado?.toLowerCase().trim();
         let color = '#3788d8'; // Default blue
-        if (s.estado === 'Pendiente') color = '#f59e0b'; // Amber/Yellow
-        if (s.estado === 'Completado') color = '#10b981'; // Green
-        if (s.estado === 'Cancelado') color = '#ef4444'; // Red
-        if (s.estado === 'Incompleto') color = '#f97316'; // Orange
+
+        if (estado === 'pendiente') color = '#f59e0b'; // Amber/Yellow
+        else if (estado === 'completado') color = '#10b981'; // Green
+        else if (estado === 'cancelado') color = '#ef4444'; // Red
+        else if (estado === 'incompleto') color = '#f97316'; // Orange
 
         return {
           id: s.idServicio.toString(),

@@ -86,9 +86,10 @@ export class ServiciosListComponent implements OnInit {
   ];
 
   // Computed properties for searchable selects
-  yearsOptions = computed(() =>
-    this.years().map(y => ({ value: y, label: y.toString() }))
-  );
+  yearsOptions = computed(() => [
+    { value: 0, label: 'Ver todos los años' },
+    ...this.years().map(y => ({ value: y, label: y.toString() }))
+  ]);
 
   monthsOptions = computed(() => this.months);
 
@@ -137,7 +138,7 @@ export class ServiciosListComponent implements OnInit {
         this.sucursales.set([]);
         this.selectedSucursal.set('all');
       }
-    }, { allowSignalWrites: true });
+    });
 
     // React to filter changes (excluding selectedCliente which has its own effect)
     effect(() => {
@@ -150,7 +151,7 @@ export class ServiciosListComponent implements OnInit {
 
       // Trigger load when any filter changes
       this.loadServicios();
-    }, { allowSignalWrites: true });
+    });
   }
 
   ngOnInit(): void {
@@ -158,6 +159,10 @@ export class ServiciosListComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['estado']) {
         this.selectedStatus.set(params['estado']);
+        // Si venimos del dashboard con estado Pendiente, mostramos todos los años
+        if (params['estado'] === 'Pendiente') {
+          this.selectedYear.set(0);
+        }
       }
     });
 
@@ -173,27 +178,26 @@ export class ServiciosListComponent implements OnInit {
     const year = this.selectedYear();
     const month = this.selectedMonth();
 
-    let startDate: Date;
-    let endDate: Date;
+    const filters: any = {};
 
-    if (month === 0) {
-      // All months - entire year
-      startDate = new Date(year, 0, 1); // January 1st
-      endDate = new Date(year, 11, 31); // December 31st
-    } else {
-      // Specific month
-      startDate = new Date(year, month - 1, 1);
-      endDate = new Date(year, month, 0); // Last day of month
+    if (year !== 0) {
+      let startDate: Date;
+      let endDate: Date;
+
+      if (month === 0) {
+        // All months - entire year
+        startDate = new Date(year, 0, 1); // January 1st
+        endDate = new Date(year, 11, 31); // December 31st
+      } else {
+        // Specific month
+        startDate = new Date(year, month - 1, 1);
+        endDate = new Date(year, month, 0); // Last day of month
+      }
+
+      // Format dates as YYYY-MM-DD
+      filters.fechaInicio = startDate.toISOString().split('T')[0];
+      filters.fechaFin = endDate.toISOString().split('T')[0];
     }
-
-    // Format dates as YYYY-MM-DD
-    const fechaInicio = startDate.toISOString().split('T')[0];
-    const fechaFin = endDate.toISOString().split('T')[0];
-
-    const filters: any = {
-      fechaInicio,
-      fechaFin
-    };
 
     if (this.selectedStatus() !== 'Todos los Estados') {
       filters.estado = this.selectedStatus();

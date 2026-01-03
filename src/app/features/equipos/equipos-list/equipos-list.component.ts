@@ -106,7 +106,7 @@ export class EquiposListComponent implements OnInit {
         this.sucursales.set([]);
         this.selectedSucursal.set('all');
       }
-    }, { allowSignalWrites: true });
+    });
 
     // React to filter changes (excluding selectedCliente which has its own effect)
     effect(() => {
@@ -117,7 +117,7 @@ export class EquiposListComponent implements OnInit {
 
       // Trigger load when any filter changes
       this.loadEquipos();
-    }, { allowSignalWrites: true });
+    });
   }
 
   ngOnInit(): void {
