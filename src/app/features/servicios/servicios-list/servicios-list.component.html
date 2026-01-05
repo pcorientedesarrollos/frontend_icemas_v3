@@ -39,7 +39,7 @@
   <!-- Table Section -->
   <div class="flex-1 min-h-[500px] bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
     <app-data-table [data]="servicios()" [columns]="columns" [actions]="actions" [loading]="loading()"
-      [searchable]="false">
+      [searchable]="false" [useCardViewOnMobile]="true" [customCardTemplate]="mobileCard">
 
       <!-- Integrated Header Filters -->
       <!-- Integrated Header Filters -->
@@ -115,6 +115,55 @@
         <!-- Intentionally empty if no specific actions needed right now -->
       </div>
     </app-data-table>
+
+    <!-- Mobile Card Template -->
+    <ng-template #mobileCard let-row>
+      <div
+        class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-3 active:scale-[99%] transition-transform duration-200 touch-manipulation"
+        (click)="viewDetails(row)">
+        <!-- Header -->
+        <div class="flex justify-between items-start">
+          <div class="flex flex-col">
+            <span class="font-bold text-gray-900 text-base leading-tight">{{ row.cliente?.nombre || 'Sin cliente'
+              }}</span>
+            <span class="text-xs text-gray-500 font-mono mt-0.5">#{{ row.folio }}</span>
+          </div>
+          <span
+            [class]="'px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide whitespace-nowrap ' + getBadgeColor(row.estado)">
+            {{ row.estado }}
+          </span>
+        </div>
+
+        <!-- Body -->
+        <div class="flex flex-col gap-2 pt-1">
+          <!-- Equipment -->
+          <div class="flex items-start gap-2.5">
+            <div class="mt-0.5 p-1 bg-gray-50 rounded text-gray-400 shrink-0">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+            </div>
+            <div class="flex flex-col min-w-0">
+              <span class="text-sm font-medium text-gray-700 truncate block">{{ row.equiposNames || 'Sin equipo'
+                }}</span>
+              <span class="text-xs text-gray-400 truncate block">{{ row.equiposSeries }}</span>
+            </div>
+          </div>
+
+          <!-- Date -->
+          <div class="flex items-center gap-2.5">
+            <div class="p-1 bg-gray-50 rounded text-gray-400 shrink-0">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <span class="text-xs text-gray-500">{{ row.fechaServicio | date:'EEEE, d MMMM' }}</span>
+          </div>
+        </div>
+      </div>
+    </ng-template>
 
     <!-- Active Filters Badges (Moved inside the table container, below header logic if needed, but app-data-table doesn't support slot there easily without modification. For now, putting it below table or modifying data-table might be needed. BUT user asked to avoid the border gap. By putting filters in header-search, that is achieved. The badges can be part of header-search too if we want, or just below the table header if we modify data-table. Let's keep things simple: Put badges in header-search as a second row? No, that might be too tall. Let's start with just filters in header-search.) -->
   </div>

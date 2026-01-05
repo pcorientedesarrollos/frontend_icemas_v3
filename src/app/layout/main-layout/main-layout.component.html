@@ -4,8 +4,10 @@
         <div class="flex items-center justify-between px-4 md:px-6 py-5">
             <!-- Left Side: Logo + Mobile Menu Button -->
             <div class="flex items-center gap-2 md:gap-3">
-                <!-- Mobile Menu Button (antes del logo en móvil) -->
-                <button (click)="toggleSidebar()" class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg order-first">
+                <!-- Mobile Menu Button (hidden on mobile now that we have bottom nav, visible only on specific tablet range if sidebar hidden? Actually, Bottom Nav is usually < lg. Sidebar is >= lg. So we don't need hamburger on mobile anymore!) -->
+                <!-- We show hamburger on all screens < lg (mobile/tablet) so they can access full menu (Logout) -->
+                <button (click)="toggleSidebar()"
+                    class="block p-2 text-gray-600 hover:bg-gray-100 rounded-lg order-first">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6h16M4 12h16M4 18h16" />
@@ -39,7 +41,7 @@
         <!-- Sidebar Desktop -->
         @if (sidebarOpen()) {
         <aside
-            class="hidden lg:flex flex-col w-64 xl:w-72 bg-white border-r border-gray-200 z-40 fixed h-[calc(100vh-104px)] md:h-[calc(100vh-120px)] shadow-lg">
+            class="hidden md:flex flex-col w-64 xl:w-72 bg-white border-r border-gray-200 z-40 fixed h-[calc(100vh-104px)] md:h-[calc(100vh-120px)] shadow-lg">
             <!-- User Profile Section Removed -->
 
             <!-- Menu -->
@@ -96,7 +98,7 @@
 
         <!-- Sidebar Mobile Overlay -->
         @if (sidebarOpen()) {
-        <div class="fixed inset-0 z-[60] lg:hidden flex">
+        <div class="fixed inset-0 z-[60] md:hidden flex">
             <div class="w-80 sm:w-96 bg-white h-full shadow-2xl flex flex-col relative">
                 <button (click)="closeSidebar()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,13 +175,17 @@
         }
 
         <!-- Main Content Area -->
-        <div class="flex-1 w-full transition-all duration-300" [class.lg:ml-64]="sidebarOpen()"
+        <div class="flex-1 w-full transition-all duration-300" [class.md:ml-64]="sidebarOpen()"
             [class.xl:ml-72]="sidebarOpen()">
             <!-- Dynamic Content Background -->
+            <!-- Added pb-20 to account for bottom nav on mobile -->
             <main
-                class="p-4 md:p-6 lg:p-8 overflow-x-hidden bg-slate-50 min-h-[calc(100vh-104px)] md:min-h-[calc(100vh-120px)]">
+                class="p-4 md:p-6 lg:p-8 overflow-x-hidden bg-slate-50 min-h-[calc(100vh-104px)] md:min-h-[calc(100vh-120px)] pb-24 lg:pb-8">
                 <router-outlet />
             </main>
         </div>
     </div>
+
+    <!-- Bottom Navigation for Mobile -->
+    <app-bottom-nav class="md:hidden"></app-bottom-nav>
 </div>

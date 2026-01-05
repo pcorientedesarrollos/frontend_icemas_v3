@@ -3,6 +3,7 @@ import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/rou
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 import { UserRole } from '../../core/enums/user-role.enum';
+import { BottomNavComponent } from '../bottom-nav/bottom-nav.component';
 
 interface MenuItem {
   label: string;
@@ -14,7 +15,7 @@ interface MenuItem {
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, BottomNavComponent],
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.css']
 })

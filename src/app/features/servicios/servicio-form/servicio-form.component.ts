@@ -16,11 +16,14 @@ import { PhotoCaptureComponent, ServicePhoto } from '../../../shared/components/
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { UniqueFolioValidator } from '../../../core/validators/unique-folio.validator';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { PdfService, ServiceOrderData } from '../../../core/services/pdf.service';
+import { PdfPreviewModalComponent } from '../../../shared/components/pdf-preview-modal/pdf-preview-modal.component';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-servicio-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SignaturePadComponent, PhotoCaptureComponent, ModalComponent, SearchableSelectComponent],
+  imports: [CommonModule, ReactiveFormsModule, SignaturePadComponent, PhotoCaptureComponent, ModalComponent, SearchableSelectComponent, PdfPreviewModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './servicio-form.component.html',
   styleUrl: './servicio-form.component.css'
@@ -39,12 +42,19 @@ export class ServicioFormComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private uniqueFolioValidator = inject(UniqueFolioValidator);
   private destroyRef = inject(DestroyRef);
+  private pdfService = inject(PdfService);
 
   isEditMode = signal(false);
   saving = signal(false);
   servicioId: number | null = null;
   signatureData = signal<string | null>(null);
   servicePhotos = signal<ServicePhoto[]>([]);
+
+  // PDF Preview Modal
+  showPdfPreview = signal(false);
+  pdfUrl = signal<string | null>(null);
+  pdfFilename = signal<string>('orden_servicio.pdf');
+  generatingPdf = signal(false);
 
   // Quick-create modals
   showClienteModal = signal(false);
@@ -709,5 +719,100 @@ export class ServicioFormComponent implements OnInit {
           }
         });
     }
+  }
+
+  async generatePdf(): Promise<void> {
+    if (!this.isEditMode() || !this.servicioId) {
+      this.notificationService.warning('Debes guardar el servicio primero');
+      return;
+    }
+
+    this.generatingPdf.set(true);
+
+    // Load the full service data
+    this.serviciosService.getOne(this.servicioId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: async (s) => {
+          try {
+            const pdfData: ServiceOrderData = {
+              folio: s.folio,
+              fechaServicio: s.fechaServicio ? new Date(s.fechaServicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              estado: s.estado,
+              cliente: {
+                nombre: s.cliente?.nombre || 'N/A',
+                empresa: s.cliente?.empresa,
+                telefono: s.cliente?.telefono,
+                email: s.cliente?.email
+              },
+              sucursal: s.sucursal ? {
+                nombre: s.sucursal.nombre,
+                direccion: s.sucursal.direccion
+              } : undefined,
+              equipos: (s.equiposAsignados && s.equiposAsignados.length > 0)
+                ? s.equiposAsignados.map((item: any) => ({
+                  nombre: item.equipo?.nombre || 'N/A',
+                  modelo: item.equipo?.modelo,
+                  serie: item.equipo?.serie,
+                  marca: item.equipo?.marca?.nombre
+                }))
+                : [{
+                  nombre: s.equipo?.nombre || 'N/A',
+                  modelo: s.equipo?.modelo,
+                  serie: s.equipo?.serie,
+                  marca: s.equipo?.marca?.nombre
+                }],
+              tecnico: {
+                nombre: s.tecnico?.nombre || 'N/A'
+              },
+              tipoServicio: {
+                nombre: s.tipoServicio?.nombre || 'N/A'
+              },
+              descripcion: s.descripcion,
+              detalleTrabajo: s.detalleTrabajo,
+              firmaCliente: this.getImageUrl(s.firma, 'firma'),
+              firmaTecnico: this.getImageUrl(s.tecnico?.firma, 'tecnico_perfil') || this.getImageUrl(s.firmaTecnico, 'firma_tecnico'),
+              fotos: s.fotos?.map((f: any) => ({
+                url: this.getImageUrl(f.url, 'foto') || '',
+                tipo: f.tipo || 'antes'
+              })) || []
+            };
+
+            const { blobUrl, filename } = await this.pdfService.generateServiceOrder(pdfData);
+            this.pdfUrl.set(blobUrl);
+            this.pdfFilename.set(filename);
+            this.showPdfPreview.set(true);
+            this.notificationService.success('PDF generado correctamente');
+          } catch (error) {
+            this.notificationService.error('Error al generar el PDF');
+          } finally {
+            this.generatingPdf.set(false);
+          }
+        },
+        error: () => {
+          this.notificationService.error('Error al cargar los datos del servicio');
+          this.generatingPdf.set(false);
+        }
+      });
+  }
+
+  closePdfPreview(): void {
+    this.showPdfPreview.set(false);
+    this.pdfUrl.set(null);
+  }
+
+  getImageUrl(fileNameOrUrl: string | undefined | null, type: 'firma' | 'firma_tecnico' | 'foto' | 'tecnico_perfil'): string | undefined {
+    if (!fileNameOrUrl) return undefined;
+    if (fileNameOrUrl.startsWith('data:') || fileNameOrUrl.startsWith('http')) return fileNameOrUrl;
+
+    const baseUrl = environment.apiUrl.replace('/api', '');
+
+    switch (type) {
+      case 'firma': return `${baseUrl}/uploads/firmas/${fileNameOrUrl}`;
+      case 'firma_tecnico': return `${baseUrl}/uploads/firmas/${fileNameOrUrl}`;
+      case 'tecnico_perfil': return `${baseUrl}/uploads/firmas_tecnicos/${fileNameOrUrl}`;
+      case 'foto': return `${baseUrl}/uploads/fotos_servicio/${fileNameOrUrl}`;
+    }
+    return fileNameOrUrl;
   }
 }

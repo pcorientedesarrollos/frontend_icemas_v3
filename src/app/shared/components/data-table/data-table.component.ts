@@ -1,5 +1,5 @@
-import { Component, input, output, signal, computed, ElementRef, ViewChild, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output, signal, computed, ElementRef, ViewChild, effect, TemplateRef } from '@angular/core';
+import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 export interface DataTableColumn {
@@ -69,7 +69,12 @@ export interface DataTableAction {
       </div>
 
       <!-- Table Container -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
+      <!-- Table Container (Hidden on mobile if card view enabled) -->
+      <div 
+        [class.hidden]="useCardViewOnMobile()" 
+        [class.md:flex]="useCardViewOnMobile()"
+        class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col"
+      >
           <div class="overflow-x-auto flex-1">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-primary-500 border-b border-primary-600">
@@ -184,6 +189,31 @@ export interface DataTableAction {
               </tbody>
             </table>
           </div>
+      </div>
+      
+      <!-- Mobile Card View Container -->
+      @if (useCardViewOnMobile() && customCardTemplate()) {
+        <div class="md:hidden flex-1 overflow-y-auto p-4 space-y-4">
+            @if (loading()) {
+               <!-- Loading Skeleton for Cards -->
+                @for (i of [1,2,3]; track i) {
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 h-32 animate-pulse"></div>
+                }
+            } @else if (paginatedData().length === 0) {
+                <div class="flex flex-col items-center justify-center py-12 text-gray-500 bg-white rounded-xl border border-gray-200">
+                    <svg class="w-10 h-10 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                    <span>No data found</span>
+                </div>
+            } @else {
+                @for (row of paginatedData(); track row) {
+                    <ng-container *ngTemplateOutlet="customCardTemplate()!; context: { $implicit: row }"></ng-container>
+                }
+            }
+        </div>
+      }
+
 
           <!-- New Advanced Pagination -->
           @if (totalPages() > 1) {
@@ -253,7 +283,8 @@ export interface DataTableAction {
 
             </div>
           }
-      </div>
+
+      <!-- End Pagination -->
     </div>
 
     <!-- Fixed Menu Backdrop & Dropdown (Updated Style) -->
@@ -315,6 +346,11 @@ export class DataTableComponent {
   searchable = input<boolean>(true);
   loading = input<boolean>(false);
   pageSize = input<number>(10);
+
+  // Mobile Card View Inputs
+  useCardViewOnMobile = input<boolean>(false);
+  customCardTemplate = input<TemplateRef<any>>();
+
 
   // State
   searchTerm = signal('');

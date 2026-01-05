@@ -1,0 +1,2 @@
+Este es un archivo de prueba para verificar que estamos en la carpeta correcta del servidor.
+Si puedes leer esto, la carpeta es correcta.

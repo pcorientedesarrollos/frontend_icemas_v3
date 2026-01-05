@@ -1,0 +1,4 @@
+/* Support for iPhone safe areas (notches/home bar) */
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+}

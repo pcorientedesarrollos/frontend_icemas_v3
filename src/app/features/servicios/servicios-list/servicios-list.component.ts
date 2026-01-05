@@ -340,4 +340,18 @@ export class ServiciosListComponent implements OnInit {
   goBack(): void {
     this.location.back();
   }
+
+  // Mobile Card Helpers
+  viewDetails(row: any): void {
+    this.router.navigate(['/servicios', row.idServicio]);
+  }
+
+  getBadgeColor(state: string): string {
+    if (!state) return 'bg-gray-100 text-gray-800';
+    const s = state.toLowerCase().trim();
+    if (['completado', 'activo'].includes(s)) return 'bg-emerald-100 text-emerald-700 border border-emerald-200';
+    if (['pendiente', 'en proceso'].includes(s)) return 'bg-amber-100 text-amber-700 border border-amber-200';
+    if (['cancelado'].includes(s)) return 'bg-red-100 text-red-700 border border-red-200';
+    return 'bg-blue-100 text-blue-700 border border-blue-200';
+  }
 }
