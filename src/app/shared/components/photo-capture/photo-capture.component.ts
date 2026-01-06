@@ -52,15 +52,6 @@ export interface ServicePhoto {
                 </svg>
               </button>
             </div>
-            <!-- Photo type badge -->
-            <div 
-              class="absolute top-2 left-2 px-2 py-0.5 text-xs font-medium rounded-full"
-              [class.bg-primary-500]="photo.tipo === 'antes'"
-              [class.bg-green-500]="photo.tipo === 'despues'"
-              [class.text-white]="true"
-            >
-              {{ photo.tipo === 'antes' ? 'Antes' : 'Después' }}
-            </div>
           </div>
         }
 
@@ -86,39 +77,6 @@ export interface ServicePhoto {
         (change)="onFileSelected($event)"
         multiple
       />
-
-      <!-- Type Selection Modal -->
-      @if (showTypeModal()) {
-        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" (click)="showTypeModal.set(false)">
-          <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-xl" (click)="$event.stopPropagation()">
-            <h4 class="text-lg font-medium text-gray-900 mb-4">Tipo de foto</h4>
-            <p class="text-sm text-gray-600 mb-4">¿Esta foto es del estado antes o después del servicio?</p>
-            <div class="flex gap-3">
-              <button
-                type="button"
-                (click)="confirmPhotoType('antes')"
-                class="flex-1 px-4 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium"
-              >
-                Antes
-              </button>
-              <button
-                type="button"
-                (click)="confirmPhotoType('despues')"
-                class="flex-1 px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
-              >
-                Después
-              </button>
-            </div>
-            <button
-              type="button"
-              (click)="showTypeModal.set(false)"
-              class="w-full mt-3 px-4 py-2 text-gray-600 hover:text-gray-800 text-sm"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      }
 
       <!-- Lightbox -->
       @if (selectedPhoto()) {
@@ -162,9 +120,7 @@ export class PhotoCaptureComponent implements OnInit {
 
   // State
   photos = signal<ServicePhoto[]>([]);
-  showTypeModal = signal(false);
   selectedPhoto = signal<ServicePhoto | null>(null);
-  pendingFiles: File[] = [];
 
   private fileInputRef: HTMLInputElement | null = null;
 
@@ -193,32 +149,27 @@ export class PhotoCaptureComponent implements OnInit {
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
+
     if (input.files && input.files.length > 0) {
-      this.pendingFiles = Array.from(input.files);
-      this.showTypeModal.set(true);
+      const files = Array.from(input.files);
+      const newPhotos: ServicePhoto[] = [];
+
+      for (const file of files) {
+        const url = URL.createObjectURL(file);
+        const photo: ServicePhoto = {
+          url,
+          tipo: 'antes', // Default to 'antes'
+          file,
+          descripcion: ''
+        };
+        newPhotos.push(photo);
+        this.photoAdded.emit(photo);
+      }
+
+      this.photos.update(current => [...current, ...newPhotos].slice(0, this.maxPhotos()));
+      this.photosChanged.emit(this.photos());
       input.value = ''; // Reset input
     }
-  }
-
-  confirmPhotoType(tipo: 'antes' | 'despues'): void {
-    const newPhotos: ServicePhoto[] = [];
-
-    for (const file of this.pendingFiles) {
-      const url = URL.createObjectURL(file);
-      const photo: ServicePhoto = {
-        url,
-        tipo,
-        file,
-        descripcion: `Foto ${tipo}`
-      };
-      newPhotos.push(photo);
-      this.photoAdded.emit(photo);
-    }
-
-    this.photos.update(current => [...current, ...newPhotos].slice(0, this.maxPhotos()));
-    this.photosChanged.emit(this.photos());
-    this.pendingFiles = [];
-    this.showTypeModal.set(false);
   }
 
   viewPhoto(photo: ServicePhoto): void {

@@ -129,14 +129,15 @@ export class DashboardComponent implements OnInit {
       .slice(0, 5); // Mostrar solo los primeros 5
     this.pendingServicesList.set(pendingList);
 
-    // Calendar Events - Filter today onwards
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Calendar Events - Filter today onwards (Local Time)
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     const events = services
       .filter(s => {
-        const serviceDate = new Date(s.fechaServicio);
-        return serviceDate >= today;
+        const estado = s.estado?.toLowerCase().trim();
+        // Filter by Date (Today onwards) AND Status (Pendiente or Completado)
+        return s.fechaServicio >= todayStr && (estado === 'pendiente' || estado === 'completado');
       })
       .map(s => {
         const estado = s.estado?.toLowerCase().trim();
