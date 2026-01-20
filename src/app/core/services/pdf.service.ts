@@ -568,12 +568,6 @@ export class PdfService {
                 doc.text('[Foto no disponible]', xPos + photoWidth / 2, yPos + photoHeight / 2, { align: 'center' });
             }
 
-            // Add label below photo
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8);
-            doc.setTextColor(107, 114, 128);
-            const label = foto.tipo === 'antes' ? 'Antes del servicio' : 'Después del servicio';
-            doc.text(label, xPos + photoWidth / 2, yPos + photoHeight + 4, { align: 'center' });
 
             col++;
             if (col >= photosPerRow) {

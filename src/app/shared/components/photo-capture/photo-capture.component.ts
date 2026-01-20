@@ -72,7 +72,6 @@ export interface ServicePhoto {
         #fileInput
         type="file"
         accept="image/*"
-        [attr.capture]="useCamera() ? 'environment' : null"
         class="hidden"
         (change)="onFileSelected($event)"
         multiple
@@ -109,7 +108,6 @@ export interface ServicePhoto {
 export class PhotoCaptureComponent implements OnInit {
   // Inputs
   title = input<string>('Fotos del Servicio');
-  useCamera = input<boolean>(true);
   maxPhotos = input<number>(10);
   initialPhotos = input<ServicePhoto[]>([]);
 

@@ -136,8 +136,8 @@ export class DashboardComponent implements OnInit {
     const events = services
       .filter(s => {
         const estado = s.estado?.toLowerCase().trim();
-        // Filter by Date (Today onwards) AND Status (Pendiente or Completado)
-        return s.fechaServicio >= todayStr && (estado === 'pendiente' || estado === 'completado');
+        // Filter by Date (Today onwards) AND Status (Pendiente only)
+        return s.fechaServicio >= todayStr && estado === 'pendiente';
       })
       .map(s => {
         const estado = s.estado?.toLowerCase().trim();
