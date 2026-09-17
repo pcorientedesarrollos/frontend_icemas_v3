@@ -35,6 +35,9 @@ export class DashboardComponent implements OnInit {
   completedServices = signal(0);
   activeTechnicians = signal(0);
 
+  anios = signal<number[]>([new Date().getFullYear()]);
+  anioSeleccionado = signal<number | null>(new Date().getFullYear());
+
   // Recent activity
   recentServices = signal<any[]>([]);
   pendingServicesList = signal<any[]>([]); // Lista de servicios pendientes
@@ -80,15 +83,8 @@ export class DashboardComponent implements OnInit {
   }
 
   loadDashboardData(): void {
-    // 1. Load Services (for stats, calendar, and recent list)
-    this.serviciosService.getAll()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (data) => {
-          this.processServiceData(data);
-        },
-        error: (err) => console.error('Error loading services', err)
-      });
+    this.loadAnios();
+    this.loadServicios();
 
     // 2. Load Technicians (for stats and active list)
     this.tecnicosService.getAll()
@@ -99,6 +95,42 @@ export class DashboardComponent implements OnInit {
         },
         error: (err) => console.error('Error loading technicians', err)
       });
+  }
+
+  private loadAnios(): void {
+    const anioActual = new Date().getFullYear();
+
+    this.serviciosService.getAnios()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (anios) => {
+          const disponibles = new Set(anios.filter(anio => anio <= anioActual));
+          disponibles.add(anioActual);
+          this.anios.set([...disponibles].sort((a, b) => b - a));
+        },
+        error: () => this.anios.set([anioActual])
+      });
+  }
+
+  private loadServicios(): void {
+    const anio = this.anioSeleccionado();
+    const filtros = anio === null ? undefined : { fechaInicio: `${anio}-01-01`, fechaFin: `${anio}-12-31` };
+
+    this.serviciosService.getAll(filtros)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          if (anio === this.anioSeleccionado()) {
+            this.processServiceData(data);
+          }
+        },
+        error: (err) => console.error('Error loading services', err)
+      });
+  }
+
+  onAnioChange(anio: string): void {
+    this.anioSeleccionado.set(anio === 'todos' ? null : Number(anio));
+    this.loadServicios();
   }
 
   processServiceData(services: any[]): void {

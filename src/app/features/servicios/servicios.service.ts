@@ -16,6 +16,10 @@ export class ServiciosService {
         return this.api.get<Servicio[]>('servicios', filters);
     }
 
+    getAnios(): Observable<number[]> {
+        return this.api.get<number[]>('servicios/anios', undefined, { skipLoading: true });
+    }
+
     getOne(id: number): Observable<Servicio> {
         return this.api.get<Servicio>(`servicios/${id}`);
     }

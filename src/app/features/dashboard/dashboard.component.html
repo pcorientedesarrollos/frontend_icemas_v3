@@ -5,6 +5,13 @@
             <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
         </div>
         <div class="flex items-center gap-3">
+            <select (change)="onAnioChange($any($event.target).value)" aria-label="Filtrar por año"
+                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <option value="todos" [selected]="anioSeleccionado() === null">Todos</option>
+                @for (anio of anios(); track anio) {
+                <option [value]="anio" [selected]="anio === anioSeleccionado()">{{ anio }}</option>
+                }
+            </select>
             <button (click)="viewCalendar()"
                 class="px-4 py-2 text-primary-700 bg-primary-50 rounded-lg hover:bg-primary-100 font-medium transition-colors">
                 📅 {{ showCalendar() ? 'Ocultar Calendario' : 'Ver Calendario' }}
